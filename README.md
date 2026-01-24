@@ -1,6 +1,17 @@
 # ChiliRig E-commerce Website
 
+![ChiliRig Hero](images/Attached_image1.png)
+
 A premium, conversion-focused e-commerce marketing website for ChiliRig, a premium chili oil brand. Built with Next.js, TypeScript, TailwindCSS, and Framer Motion.
+
+## Screenshots
+
+<div align="center">
+  <img src="images/Attached_image2.png" width="45%" alt="Product Showcase" />
+  <img src="images/Attached_image3.png" width="45%" alt="Recipe Section" />
+  <br />
+  <img src="images/Attached_image4.png" width="91%" alt="Mobile View / Detailed View" />
+</div>
 
 ## Features
 
