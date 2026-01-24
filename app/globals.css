@@ -1,0 +1,186 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Base Colors - Light Mode */
+    --background: 30 20% 98%;
+    --foreground: 0 0% 10%;
+    
+    /* Primary Colors - #9A0002 */
+    --primary: 359 100% 30%;
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: 359 100% 25%;
+    
+    /* Secondary Colors */
+    --secondary: 30 20% 96%;
+    --secondary-foreground: 0 0% 10%;
+    
+    /* Accent Colors */
+    --accent: 359 100% 30%;
+    --accent-foreground: 0 0% 100%;
+    
+    /* Destructive */
+    --destructive: 359 100% 30%;
+    --destructive-foreground: 0 0% 100%;
+    
+    /* Muted Colors */
+    --muted: 30 20% 95%;
+    --muted-foreground: 0 0% 45%;
+    
+    /* Border & Input */
+    --border: 0 0% 85%;
+    --input: 30 20% 96%;
+    --ring: 359 100% 30%;
+    
+    /* Radius */
+    --radius: 1rem;
+    
+    /* Custom ChiliRig Colors */
+    --crimson-50: 254 242 242;
+    --crimson-100: 254 226 226;
+    --crimson-200: 254 202 202;
+    --crimson-300: 252 165 165;
+    --crimson-400: 248 113 113;
+    --crimson-500: 239 68 68;
+    --crimson-600: 220 38 38;
+    --crimson-700: 185 28 28;
+    --crimson-800: 153 27 27;
+    --crimson-900: 127 29 29;
+    --crimson-950: 69 10 10;
+    
+    --red-50: 254 242 242;
+    --red-100: 254 226 226;
+    --red-200: 254 202 202;
+    --red-300: 252 165 165;
+    --red-400: 248 113 113;
+    --red-500: 239 68 68;
+    --red-600: 220 38 38;
+    --red-700: 185 28 28;
+    --red-800: 153 27 27;
+    --red-900: 127 29 29;
+    
+    /* Gray Scale for Light Theme */
+    --gray-50: 250 250 250;
+    --gray-100: 245 245 245;
+    --gray-200: 229 229 229;
+    --gray-300: 212 212 212;
+    --gray-400: 163 163 163;
+    --gray-500: 115 115 115;
+    --gray-600: 82 82 82;
+    --gray-700: 64 64 64;
+    --gray-800: 38 38 38;
+    --gray-900: 23 23 23;
+    --gray-950: 10 10 10;
+    
+    /* Glass Effects - Light Mode */
+    --glass-bg: 0 0% 100% / 0.6;
+    --glass-border: 0 0% 0% / 0.1;
+    --glass-hover: 0 0% 100% / 0.8;
+    
+    /* Text Colors - Light Mode */
+    --text-primary: 0 0% 10%;
+    --text-secondary: 0 0% 30%;
+    --text-muted: 0 0% 50%;
+    --text-accent: 359 100% 30%;
+    
+    /* Background Variants - Light Mode */
+    --bg-primary: 30 20% 98%;
+    --bg-secondary: 0 0% 100%;
+    --bg-tertiary: 30 20% 96%;
+    --bg-theme: 359 100% 30%;
+    
+    /* Shadow Colors */
+    --shadow-sm: 0 0% 0% / 0.05;
+    --shadow-md: 0 0% 0% / 0.1;
+    --shadow-lg: 0 0% 0% / 0.15;
+    --shadow-xl: 0 0% 0% / 0.2;
+    --shadow-crimson: 220 38 38 / 0.2;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))];
+    background-attachment: fixed;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  .section-padding {
+    @apply py-16 md:py-24 lg:py-32;
+  }
+  
+  .container-padding {
+    @apply px-4 sm:px-6 lg:px-8;
+  }
+  
+  /* Glass effect utilities */
+  .glass {
+    background: hsl(var(--glass-bg));
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid hsl(var(--glass-border));
+  }
+  
+  .glass-hover {
+    transition: background 0.2s;
+  }
+  
+  .glass-hover:hover {
+    background: hsl(var(--glass-hover));
+  }
+  
+  /* Theme colored section */
+  .bg-theme {
+    background: hsl(var(--bg-theme));
+    color: hsl(var(--primary-foreground));
+  }
+}
+
+@keyframes accordion-down {
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+  }
+}
+
+@keyframes accordion-up {
+  from {
+    height: var(--radix-accordion-content-height);
+  }
+  to {
+    height: 0;
+  }
+}
+
+@keyframes gradient-shift {
+  0% {
+    background-position: 0% 0%;
+  }
+  100% {
+    background-position: 200% 0%;
+  }
+}
+
+.animate-accordion-down {
+  animation: accordion-down 0.2s ease-out;
+}
+
+.animate-accordion-up {
+  animation: accordion-up 0.2s ease-out;
+}
+
+.animate-gradient {
+  animation: gradient-shift 3s linear infinite;
+}
