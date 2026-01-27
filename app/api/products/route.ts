@@ -26,9 +26,11 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const parsedHeatLevel = parseInt(body.heatLevel);
-    const heatLevel: HeatLevel = (parsedHeatLevel >= 1 && parsedHeatLevel <= 5) 
-      ? (parsedHeatLevel as HeatLevel) 
-      : 3; // Default to 3 if invalid
+    // Validate and cast to HeatLevel type (1-5)
+    let heatLevel: HeatLevel = 3; // Default
+    if (parsedHeatLevel === 1 || parsedHeatLevel === 2 || parsedHeatLevel === 3 || parsedHeatLevel === 4 || parsedHeatLevel === 5) {
+      heatLevel = parsedHeatLevel;
+    }
     
     const newProduct: Product = {
       id: Date.now().toString(),
