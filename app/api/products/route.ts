@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { products, Product } from "@/data/products";
+import { products, Product, HeatLevel } from "@/data/products";
 import { requireAuth } from "@/lib/auth";
 import fs from "fs";
 import path from "path";
@@ -25,6 +25,11 @@ export async function POST(request: NextRequest) {
   
   try {
     const body = await request.json();
+    const parsedHeatLevel = parseInt(body.heatLevel);
+    const heatLevel: HeatLevel = (parsedHeatLevel >= 1 && parsedHeatLevel <= 5) 
+      ? (parsedHeatLevel as HeatLevel) 
+      : 3; // Default to 3 if invalid
+    
     const newProduct: Product = {
       id: Date.now().toString(),
       name: body.name,
@@ -34,7 +39,7 @@ export async function POST(request: NextRequest) {
       originalPrice: body.originalPrice ? parseFloat(body.originalPrice) : undefined,
       image: body.image,
       images: body.images || [body.image],
-      heatLevel: parseInt(body.heatLevel),
+      heatLevel,
       category: body.category,
       inStock: body.inStock !== false,
       flavorNotes: body.flavorNotes || [],

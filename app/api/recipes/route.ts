@@ -21,6 +21,11 @@ export async function POST(request: NextRequest) {
   
   try {
     const body = await request.json();
+    const parsedHeatLevel = parseInt(body.heatLevel);
+    const heatLevel = (parsedHeatLevel >= 1 && parsedHeatLevel <= 5) 
+      ? (parsedHeatLevel as 1 | 2 | 3 | 4 | 5) 
+      : 3; // Default to 3 if invalid
+    
     const newRecipe: Recipe = {
       id: Date.now().toString(),
       title: body.title,
@@ -30,7 +35,7 @@ export async function POST(request: NextRequest) {
       prepTime: body.prepTime,
       cookTime: body.cookTime,
       servings: parseInt(body.servings),
-      heatLevel: parseInt(body.heatLevel),
+      heatLevel,
       ingredients: body.ingredients || [],
       steps: body.steps || [],
       tips: body.tips || [],
