@@ -377,7 +377,7 @@ export default function StoryCanvas({ story, onSave, onPreview }: StoryCanvasPro
         return (
           <div 
             key={section.id} 
-            ref={(el) => (sectionRefs.current[section.id] = el)}
+            ref={(el) => { sectionRefs.current[section.id] = el; }}
             className={`mb-16 grid gap-12 lg:grid-cols-2 lg:items-center relative group transition-all duration-500 ${
               isHighlighted ? "ring-4 ring-primary ring-offset-4 rounded-2xl p-4" : ""
             }`}
@@ -424,7 +424,7 @@ export default function StoryCanvas({ story, onSave, onPreview }: StoryCanvasPro
         return (
           <div 
             key={section.id} 
-            ref={(el) => (sectionRefs.current[section.id] = el)}
+            ref={(el) => { sectionRefs.current[section.id] = el; }}
             className={`mb-16 relative group transition-all duration-500 ${
               isHighlighted ? "ring-4 ring-primary ring-offset-4 rounded-2xl p-4" : ""
             }`}
@@ -518,7 +518,7 @@ export default function StoryCanvas({ story, onSave, onPreview }: StoryCanvasPro
         return (
           <div 
             key={section.id} 
-            ref={(el) => (sectionRefs.current[section.id] = el)}
+            ref={(el) => { sectionRefs.current[section.id] = el; }}
             className={`mb-16 grid gap-12 lg:grid-cols-2 lg:items-center relative group transition-all duration-500 ${
               isHighlighted ? "ring-4 ring-primary ring-offset-4 rounded-2xl p-4" : ""
             }`}
@@ -600,7 +600,7 @@ export default function StoryCanvas({ story, onSave, onPreview }: StoryCanvasPro
         return (
           <div 
             key={section.id} 
-            ref={(el) => (sectionRefs.current[section.id] = el)}
+            ref={(el) => { sectionRefs.current[section.id] = el; }}
             className={`mb-16 text-center relative group transition-all duration-500 ${
               isHighlighted ? "ring-4 ring-primary ring-offset-4 rounded-2xl p-4" : ""
             }`}
