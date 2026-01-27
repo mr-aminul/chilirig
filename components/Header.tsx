@@ -20,9 +20,9 @@ export function Header() {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 pt-4 px-4 sm:px-6 lg:px-8">
       <div className="mx-auto w-full sm:w-3/4 md:w-2/3 lg:w-1/2 flex justify-center relative">
-        <nav className={`relative rounded-full bg-white/8 backdrop-blur-2xl shadow-lg shadow-black/5 px-3 sm:px-6 py-2 w-full ${mobileMenuOpen ? '' : 'overflow-hidden'}`}>
+        <nav className={`relative rounded-full bg-white/20 backdrop-blur-2xl shadow-lg shadow-black/5 px-3 sm:px-6 py-2 w-full ${mobileMenuOpen ? '' : 'overflow-hidden'}`}>
           {/* Seamless glass gradient - single smooth layer */}
-          <div className="absolute inset-0 rounded-full bg-gradient-to-b from-white/15 via-white/3 to-transparent pointer-events-none" />
+          <div className="absolute inset-0 rounded-full bg-gradient-to-b from-white/30 via-white/10 to-transparent pointer-events-none" />
           
           <div className="relative flex items-center justify-between gap-2">
             {/* Logo */}
@@ -31,7 +31,7 @@ export function Header() {
                 <div className="w-6 h-6 rounded bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(var(--primary-hover))] flex items-center justify-center">
                   <span className="text-white text-xs font-bold">C</span>
                 </div>
-                <span className="text-black font-semibold text-base sm:text-lg tracking-tight mix-blend-difference">ChiliRig</span>
+                <span className="text-black font-semibold text-base sm:text-lg tracking-tight">ChiliRig</span>
               </div>
             </Link>
 
@@ -41,7 +41,7 @@ export function Header() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="px-4 py-2 text-sm font-medium text-black transition-all duration-200 rounded-full hover:bg-black/10 mix-blend-difference"
+                  className="px-4 py-2 text-sm font-medium text-black transition-all duration-200 rounded-full hover:bg-black/10"
                 >
                   {link.label}
                 </Link>
@@ -64,7 +64,7 @@ export function Header() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="md:hidden mix-blend-difference flex-shrink-0"
+                className="md:hidden flex-shrink-0"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 aria-label="Menu"
               >
@@ -80,14 +80,14 @@ export function Header() {
 
         {/* Mobile Menu - Outside nav to avoid overflow clipping */}
         {mobileMenuOpen && (
-          <div className="absolute top-full left-0 right-0 mt-2 rounded-2xl bg-white/8 backdrop-blur-2xl shadow-lg shadow-black/5 overflow-hidden z-50">
-            <div className="absolute inset-0 rounded-2xl bg-gradient-to-b from-white/15 via-white/3 to-transparent pointer-events-none" />
+          <div className="absolute top-full left-0 right-0 mt-2 rounded-2xl bg-white/20 backdrop-blur-2xl shadow-lg shadow-black/5 overflow-hidden z-50">
+            <div className="absolute inset-0 rounded-2xl bg-gradient-to-b from-white/30 via-white/10 to-transparent pointer-events-none" />
             <nav className="relative flex flex-col p-4 space-y-2">
               {navLinks.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="px-4 py-2 text-sm font-medium text-black transition-all duration-200 rounded-lg hover:bg-black/10 mix-blend-difference"
+                  className="px-4 py-2 text-sm font-medium text-black transition-all duration-200 rounded-lg hover:bg-black/10"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   {link.label}
