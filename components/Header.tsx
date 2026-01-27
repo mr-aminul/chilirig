@@ -19,19 +19,19 @@ export function Header() {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 pt-4 px-4 sm:px-6 lg:px-8">
-      <div className="mx-auto w-1/2 flex justify-center">
-        <nav className="relative rounded-full border border-black/10 bg-white/60 backdrop-blur-2xl shadow-2xl shadow-black/10 px-6 py-2 w-full">
-          {/* Glass effect overlay with gradient */}
-          <div className="absolute inset-0 rounded-full bg-gradient-to-b from-white/60 via-transparent to-black/5" />
+      <div className="mx-auto w-full sm:w-3/4 md:w-2/3 lg:w-1/2 flex justify-center relative">
+        <nav className="relative rounded-full bg-white/8 backdrop-blur-2xl shadow-lg shadow-black/5 px-3 sm:px-6 py-2 w-full overflow-hidden">
+          {/* Seamless glass gradient - single smooth layer */}
+          <div className="absolute inset-0 rounded-full bg-gradient-to-b from-white/15 via-white/3 to-transparent pointer-events-none" />
           
-          <div className="relative flex items-center justify-between">
+          <div className="relative flex items-center justify-between gap-2">
             {/* Logo */}
-            <Link href="/" className="flex items-center space-x-2 z-10 group">
+            <Link href="/" className="flex items-center space-x-2 z-10 group flex-shrink-0">
               <div className="flex items-center space-x-2">
                 <div className="w-6 h-6 rounded bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(var(--primary-hover))] flex items-center justify-center">
                   <span className="text-white text-xs font-bold">C</span>
                 </div>
-                <span className="text-[hsl(var(--text-primary))] font-semibold text-lg tracking-tight">ChiliRig</span>
+                <span className="text-black font-semibold text-base sm:text-lg tracking-tight mix-blend-difference">ChiliRig</span>
               </div>
             </Link>
 
@@ -41,7 +41,7 @@ export function Header() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="px-4 py-2 text-sm font-medium text-[hsl(var(--text-secondary))] transition-all duration-200 rounded-full hover:bg-black/5 hover:text-[hsl(var(--text-primary))]"
+                  className="px-4 py-2 text-sm font-medium text-black transition-all duration-200 rounded-full hover:bg-black/10 mix-blend-difference"
                 >
                   {link.label}
                 </Link>
@@ -49,7 +49,7 @@ export function Header() {
             </div>
 
             {/* Right side actions */}
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
               <Link href="/shop">
                 <Button 
                   size="sm" 
@@ -59,72 +59,75 @@ export function Header() {
                   Shop Now
                 </Button>
               </Link>
-              
-              <Link href="/checkout" className="relative">
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  aria-label="Shopping cart"
-                >
-                  <ShoppingCart className="h-5 w-5" />
-                  {itemCount > 0 && (
-                    <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-[hsl(var(--primary))] text-xs font-bold text-white shadow-lg ring-2 ring-white/20">
-                      {itemCount}
-                    </span>
-                  )}
-                </Button>
-              </Link>
 
-              {/* Mobile menu button */}
+              {/* Mobile menu button - Always visible on mobile */}
               <Button
                 variant="ghost"
                 size="icon"
-                className="md:hidden"
+                className="md:hidden mix-blend-difference flex-shrink-0"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 aria-label="Menu"
               >
                 {mobileMenuOpen ? (
-                  <X className="h-5 w-5" />
+                  <X className="h-5 w-5 text-black" />
                 ) : (
-                  <Menu className="h-5 w-5" />
+                  <Menu className="h-5 w-5 text-black" />
                 )}
               </Button>
             </div>
           </div>
-
-          {/* Mobile Menu */}
-          {mobileMenuOpen && (
-            <div className="absolute top-full left-0 right-0 mt-2 rounded-2xl border border-black/10 bg-white/60 backdrop-blur-2xl shadow-2xl shadow-black/10 overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-b from-white/60 via-transparent to-black/5" />
-              <nav className="relative flex flex-col p-4 space-y-2">
-                {navLinks.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className="px-4 py-2 text-sm font-medium text-[hsl(var(--text-secondary))] transition-all duration-200 rounded-lg hover:bg-black/5 hover:text-[hsl(var(--text-primary))]"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    {link.label}
-                  </Link>
-                ))}
-                <Link 
-                  href="/shop" 
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="mt-2"
-                >
-                  <Button 
-                    size="sm" 
-                    variant="default"
-                    className="w-full"
-                  >
-                    Shop Now
-                  </Button>
-                </Link>
-              </nav>
-            </div>
-          )}
         </nav>
+
+        {/* Mobile Menu - Moved outside nav to avoid overflow-hidden clipping */}
+        {mobileMenuOpen && (
+          <div className="absolute top-full left-0 right-0 mt-2 rounded-2xl bg-white/8 backdrop-blur-2xl shadow-lg shadow-black/5 overflow-hidden z-50">
+            <div className="absolute inset-0 rounded-2xl bg-gradient-to-b from-white/15 via-white/3 to-transparent pointer-events-none" />
+            <nav className="relative flex flex-col p-4 space-y-2">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="px-4 py-2 text-sm font-medium text-black transition-all duration-200 rounded-lg hover:bg-black/10 mix-blend-difference"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {link.label}
+                </Link>
+              ))}
+              <Link 
+                href="/shop" 
+                onClick={() => setMobileMenuOpen(false)}
+                className="mt-2"
+              >
+                <Button 
+                  size="sm" 
+                  variant="default"
+                  className="w-full"
+                >
+                  Shop Now
+                </Button>
+              </Link>
+            </nav>
+          </div>
+        )}
       </div>
+
+      {/* Floating Cart Bubble - Only shows when items are in cart */}
+      {itemCount > 0 && (
+        <Link 
+          href="/checkout" 
+          className="fixed bottom-6 right-6 z-50 group"
+          aria-label="Shopping cart"
+        >
+          <div className="relative">
+            <div className="w-14 h-14 rounded-full bg-[hsl(var(--primary))] shadow-lg shadow-black/20 flex items-center justify-center transition-all duration-300 hover:scale-110 hover:shadow-xl hover:shadow-black/30">
+              <ShoppingCart className="h-6 w-6 text-white" />
+            </div>
+            <span className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-white text-xs font-bold text-[hsl(var(--primary))] shadow-lg ring-2 ring-[hsl(var(--primary))]/20 animate-pulse">
+              {itemCount}
+            </span>
+          </div>
+        </Link>
+      )}
     </header>
   );
 }

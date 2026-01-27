@@ -15,6 +15,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Loader } from "@/components/ui/loader";
 import { Product } from "@/data/products";
 import ProductForm from "@/components/admin/ProductForm";
 
@@ -120,7 +121,8 @@ export default function ProductsPage() {
 
         {/* Products Grid */}
         {loading ? (
-          <div className="text-center py-12">
+          <div className="flex flex-col items-center justify-center py-12 gap-4">
+            <Loader size="lg" className="text-[hsl(var(--primary))]" />
             <p className="text-muted-foreground">Loading products...</p>
           </div>
         ) : filteredProducts.length === 0 ? (
@@ -188,6 +190,23 @@ export default function ProductsPage() {
                         {product.inStock ? "In Stock" : "Out of Stock"}
                       </span>
                     </div>
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {product.isBestSeller && (
+                      <span className="px-2 py-1 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
+                        Best Seller
+                      </span>
+                    )}
+                    {product.isNew && (
+                      <span className="px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                        New
+                      </span>
+                    )}
+                    {product.isBundle && (
+                      <span className="px-2 py-1 rounded text-xs font-medium bg-purple-100 text-purple-800">
+                        Bundle
+                      </span>
+                    )}
                   </div>
                   <div className="mt-2 text-xs text-muted-foreground">
                     Heat Level: {product.heatLevel}/5 | Category: {product.category}

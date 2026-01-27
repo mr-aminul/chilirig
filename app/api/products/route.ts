@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { products, Product, HeatLevel } from "@/data/products";
 import { requireAuth } from "@/lib/auth";
+import { generateSlug } from "@/lib/utils";
 import fs from "fs";
 import path from "path";
 
@@ -35,7 +36,7 @@ export async function POST(request: NextRequest) {
     const newProduct: Product = {
       id: Date.now().toString(),
       name: body.name,
-      slug: body.slug || body.name.toLowerCase().replace(/\s+/g, "-"),
+      slug: generateSlug(body.name),
       description: body.description,
       price: parseFloat(body.price),
       originalPrice: body.originalPrice ? parseFloat(body.originalPrice) : undefined,
@@ -47,6 +48,9 @@ export async function POST(request: NextRequest) {
       flavorNotes: body.flavorNotes || [],
       ingredients: body.ingredients || [],
       nutrition: body.nutrition,
+      isBestSeller: body.isBestSeller === true,
+      isNew: body.isNew === true,
+      isBundle: body.isBundle === true,
     };
 
     // In a real app, you'd save to a database
@@ -68,6 +72,11 @@ export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
     const { id, ...updates } = body;
+
+    // Auto-generate slug from name if name is being updated
+    if (updates.name) {
+      updates.slug = generateSlug(updates.name);
+    }
 
     // In a real app, you'd update in a database
     return NextResponse.json({ success: true, data: { id, ...updates } });

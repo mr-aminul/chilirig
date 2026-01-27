@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Loader } from "@/components/ui/loader";
 
 const adminSections = [
   {
@@ -108,8 +109,17 @@ export default function AdminDashboard() {
                 disabled={loggingOut}
                 className="flex items-center gap-2"
               >
-                <LogOut className="h-4 w-4" />
-                {loggingOut ? "Logging out..." : "Logout"}
+                {loggingOut ? (
+                  <>
+                    <Loader size="sm" className="mr-1" />
+                    Logging out...
+                  </>
+                ) : (
+                  <>
+                    <LogOut className="h-4 w-4" />
+                    Logout
+                  </>
+                )}
               </Button>
             </div>
           </div>

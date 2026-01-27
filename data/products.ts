@@ -20,6 +20,9 @@ export interface Product {
     totalFat: string;
     sodium: string;
   };
+  isBestSeller?: boolean;
+  isNew?: boolean;
+  isBundle?: boolean;
 }
 
 export const products: Product[] = [
@@ -54,6 +57,9 @@ export const products: Product[] = [
       totalFat: "5g",
       sodium: "120mg",
     },
+    isBestSeller: true,
+    isNew: false,
+    isBundle: false,
   },
   {
     id: "2",
@@ -87,6 +93,9 @@ export const products: Product[] = [
       totalFat: "5.5g",
       sodium: "140mg",
     },
+    isBestSeller: true,
+    isNew: false,
+    isBundle: false,
   },
   {
     id: "3",
@@ -113,6 +122,9 @@ export const products: Product[] = [
       "Sichuan peppercorns",
       "Sea salt",
     ],
+    isBestSeller: true,
+    isNew: true,
+    isBundle: false,
   },
   {
     id: "4",
@@ -139,6 +151,9 @@ export const products: Product[] = [
       "Sea salt",
       "Sesame seeds",
     ],
+    isBestSeller: true,
+    isNew: true,
+    isBundle: false,
   },
   {
     id: "5",
@@ -159,6 +174,9 @@ export const products: Product[] = [
     inStock: true,
     flavorNotes: ["Variety", "Premium", "Gift-Ready"],
     ingredients: ["Original Recipe Chili Oil", "Beef Chili Oil", "Extra Hot Chili Oil"],
+    isBestSeller: false,
+    isNew: true,
+    isBundle: true,
   },
   {
     id: "6",
@@ -179,6 +197,9 @@ export const products: Product[] = [
     inStock: true,
     flavorNotes: ["Beginner-Friendly", "Versatile", "Complete"],
     ingredients: ["Original Recipe Chili Oil", "Mild Chili Oil", "Recipe Cards"],
+    isBestSeller: false,
+    isNew: false,
+    isBundle: true,
   },
 ];
 
@@ -192,13 +213,13 @@ export function getProductsByCategory(category: string): Product[] {
 }
 
 export function getBestSellers(): Product[] {
-  return [products[0], products[1], products[2], products[3]];
+  return products.filter((p) => p.isBestSeller === true);
 }
 
 export function getNewProducts(): Product[] {
-  return [products[2], products[3], products[4]];
+  return products.filter((p) => p.isNew === true);
 }
 
 export function getBundles(): Product[] {
-  return products.filter((p) => p.category === "gift-set");
+  return products.filter((p) => p.isBundle === true);
 }

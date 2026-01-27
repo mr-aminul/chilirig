@@ -5,7 +5,9 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Loader } from "@/components/ui/loader";
 import { Product } from "@/data/products";
+import { generateSlug } from "@/lib/utils";
 
 interface ProductFormProps {
   product?: Product | null;
@@ -15,7 +17,6 @@ interface ProductFormProps {
 export default function ProductForm({ product, onClose }: ProductFormProps) {
   const [formData, setFormData] = useState({
     name: "",
-    slug: "",
     description: "",
     price: "",
     originalPrice: "",
@@ -32,6 +33,9 @@ export default function ProductForm({ product, onClose }: ProductFormProps) {
       totalFat: "",
       sodium: "",
     },
+    isBestSeller: false,
+    isNew: false,
+    isBundle: false,
   });
 
   const [loading, setLoading] = useState(false);
@@ -40,7 +44,6 @@ export default function ProductForm({ product, onClose }: ProductFormProps) {
     if (product) {
       setFormData({
         name: product.name,
-        slug: product.slug,
         description: product.description,
         price: product.price.toString(),
         originalPrice: product.originalPrice?.toString() || "",
@@ -57,6 +60,9 @@ export default function ProductForm({ product, onClose }: ProductFormProps) {
           totalFat: product.nutrition?.totalFat || "",
           sodium: product.nutrition?.sodium || "",
         },
+        isBestSeller: product.isBestSeller || false,
+        isNew: product.isNew || false,
+        isBundle: product.isBundle || false,
       });
     }
   }, [product]);
@@ -69,7 +75,7 @@ export default function ProductForm({ product, onClose }: ProductFormProps) {
       const payload = {
         ...(product && { id: product.id }),
         name: formData.name,
-        slug: formData.slug || formData.name.toLowerCase().replace(/\s+/g, "-"),
+        slug: generateSlug(formData.name),
         description: formData.description,
         price: formData.price,
         originalPrice: formData.originalPrice || undefined,
@@ -94,6 +100,9 @@ export default function ProductForm({ product, onClose }: ProductFormProps) {
               sodium: formData.nutrition.sodium,
             }
           : undefined,
+        isBestSeller: formData.isBestSeller,
+        isNew: formData.isNew,
+        isBundle: formData.isBundle,
       };
 
       const url = "/api/products";
@@ -130,23 +139,13 @@ export default function ProductForm({ product, onClose }: ProductFormProps) {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium mb-1 block">Product Name *</label>
-                <Input
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  required
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium mb-1 block">Slug</label>
-                <Input
-                  value={formData.slug}
-                  onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                  placeholder="Auto-generated from name"
-                />
-              </div>
+            <div>
+              <label className="text-sm font-medium mb-1 block">Product Name *</label>
+              <Input
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                required
+              />
             </div>
 
             <div>
@@ -226,6 +225,48 @@ export default function ProductForm({ product, onClose }: ProductFormProps) {
                 <label htmlFor="inStock" className="text-sm font-medium">
                   In Stock
                 </label>
+              </div>
+            </div>
+
+            <div className="border-t pt-4">
+              <h3 className="font-medium mb-4">Product Segments</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="isBestSeller"
+                    checked={formData.isBestSeller}
+                    onChange={(e) => setFormData({ ...formData, isBestSeller: e.target.checked })}
+                    className="h-4 w-4"
+                  />
+                  <label htmlFor="isBestSeller" className="text-sm font-medium">
+                    Best Seller
+                  </label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="isNew"
+                    checked={formData.isNew}
+                    onChange={(e) => setFormData({ ...formData, isNew: e.target.checked })}
+                    className="h-4 w-4"
+                  />
+                  <label htmlFor="isNew" className="text-sm font-medium">
+                    New Product
+                  </label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="isBundle"
+                    checked={formData.isBundle}
+                    onChange={(e) => setFormData({ ...formData, isBundle: e.target.checked })}
+                    className="h-4 w-4"
+                  />
+                  <label htmlFor="isBundle" className="text-sm font-medium">
+                    Bundle
+                  </label>
+                </div>
               </div>
             </div>
 
@@ -329,7 +370,16 @@ export default function ProductForm({ product, onClose }: ProductFormProps) {
                 Cancel
               </Button>
               <Button type="submit" disabled={loading}>
-                {loading ? "Saving..." : product ? "Update Product" : "Create Product"}
+                {loading ? (
+                  <>
+                    <Loader size="sm" className="mr-2" />
+                    Saving...
+                  </>
+                ) : product ? (
+                  "Update Product"
+                ) : (
+                  "Create Product"
+                )}
               </Button>
             </div>
           </form>

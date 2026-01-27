@@ -1,11 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ShoppingCart, Heart } from "lucide-react";
 import { Product } from "@/data/products";
 import { HeatMeter } from "@/components/HeatMeter";
 import { Button } from "@/components/ui/button";
+import { Loader } from "@/components/ui/loader";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatPrice } from "@/lib/utils";
 import { useCart } from "@/lib/store";
@@ -17,15 +19,20 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
   const addItem = useCart((state) => state.addItem);
+  const [adding, setAdding] = useState(false);
 
-  const handleAddToCart = (e: React.MouseEvent) => {
+  const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
+    setAdding(true);
+    // Simulate brief delay for better UX
+    await new Promise((resolve) => setTimeout(resolve, 300));
     addItem({
       id: product.id,
       name: product.name,
       price: product.price,
       image: product.image,
     });
+    setAdding(false);
   };
 
   return (
@@ -87,10 +94,20 @@ export function ProductCard({ product }: ProductCardProps) {
               size="sm"
               onClick={handleAddToCart}
               className="flex-shrink-0"
+              disabled={adding || !product.inStock}
               aria-label={`Add ${product.name} to cart`}
             >
-              <ShoppingCart className="mr-2 h-4 w-4" />
-              Add
+              {adding ? (
+                <>
+                  <Loader size="sm" className="mr-2" />
+                  Adding...
+                </>
+              ) : (
+                <>
+                  <ShoppingCart className="mr-2 h-4 w-4" />
+                  Add
+                </>
+              )}
             </Button>
           </div>
         </CardContent>

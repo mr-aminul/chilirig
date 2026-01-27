@@ -8,6 +8,7 @@ import { Footer } from "@/components/Footer";
 import { SectionContainer } from "@/components/SectionContainer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Loader } from "@/components/ui/loader";
 import { HeatMeter } from "@/components/HeatMeter";
 import {
   Accordion,
@@ -31,13 +32,17 @@ export default function ProductPage({ params }: ProductPageProps) {
   const product = getProductBySlug(params.slug);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
+  const [addingToCart, setAddingToCart] = useState(false);
   const addItem = useCart((state) => state.addItem);
 
   if (!product) {
     notFound();
   }
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
+    setAddingToCart(true);
+    // Simulate brief delay for better UX
+    await new Promise((resolve) => setTimeout(resolve, 500));
     for (let i = 0; i < quantity; i++) {
       addItem({
         id: product.id,
@@ -46,6 +51,7 @@ export default function ProductPage({ params }: ProductPageProps) {
         image: product.image,
       });
     }
+    setAddingToCart(false);
   };
 
   // Get related products (same category, exclude current)
@@ -169,20 +175,38 @@ export default function ProductPage({ params }: ProductPageProps) {
                     size="lg"
                     onClick={handleAddToCart}
                     className="flex-1"
+                    disabled={addingToCart || !product.inStock}
                   >
-                    <ShoppingCart className="mr-2 h-5 w-5" />
-                    Add to Cart
+                    {addingToCart ? (
+                      <>
+                        <Loader size="sm" className="mr-2" />
+                        Adding...
+                      </>
+                    ) : (
+                      <>
+                        <ShoppingCart className="mr-2 h-5 w-5" />
+                        Add to Cart
+                      </>
+                    )}
                   </Button>
                   <Button
                     variant="secondary"
                     size="lg"
                     className="flex-1"
-                    onClick={() => {
-                      handleAddToCart();
+                    disabled={addingToCart || !product.inStock}
+                    onClick={async () => {
+                      await handleAddToCart();
                       window.location.href = "/checkout";
                     }}
                   >
-                    Buy Now
+                    {addingToCart ? (
+                      <>
+                        <Loader size="sm" className="mr-2" />
+                        Processing...
+                      </>
+                    ) : (
+                      "Buy Now"
+                    )}
                   </Button>
                 </div>
                 {!product.inStock && (

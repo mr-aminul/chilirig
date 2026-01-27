@@ -3,17 +3,22 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Loader } from "@/components/ui/loader";
 import { Send } from "lucide-react";
 
 export function NewsletterForm() {
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Mock submission
+    setLoading(true);
+    // Simulate API call
+    await new Promise((resolve) => setTimeout(resolve, 1000));
     setSubmitted(true);
     setEmail("");
+    setLoading(false);
     setTimeout(() => setSubmitted(false), 3000);
   };
 
@@ -33,9 +38,21 @@ export function NewsletterForm() {
         size="lg" 
         variant="default"
         className="whitespace-nowrap"
+        disabled={loading || submitted}
       >
-        {submitted ? "Subscribed!" : "Subscribe"}
-        {!submitted && <Send className="ml-2 h-4 w-4" />}
+        {loading ? (
+          <>
+            <Loader size="sm" className="mr-2" />
+            Subscribing...
+          </>
+        ) : submitted ? (
+          "Subscribed!"
+        ) : (
+          <>
+            Subscribe
+            <Send className="ml-2 h-4 w-4" />
+          </>
+        )}
       </Button>
     </form>
   );

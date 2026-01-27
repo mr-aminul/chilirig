@@ -13,6 +13,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Loader } from "@/components/ui/loader";
 import { Recipe } from "@/data/recipes";
 import RecipeForm from "@/components/admin/RecipeForm";
 
@@ -118,7 +119,8 @@ export default function RecipesPage() {
 
         {/* Recipes Grid */}
         {loading ? (
-          <div className="text-center py-12">
+          <div className="flex flex-col items-center justify-center py-12 gap-4">
+            <Loader size="lg" className="text-[hsl(var(--primary))]" />
             <p className="text-muted-foreground">Loading recipes...</p>
           </div>
         ) : filteredRecipes.length === 0 ? (

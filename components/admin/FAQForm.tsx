@@ -5,6 +5,7 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Loader } from "@/components/ui/loader";
 import { FAQCategory } from "@/data/faq";
 
 interface FAQFormProps {
@@ -176,7 +177,14 @@ export default function FAQForm({ category, question, categories, onClose }: FAQ
                 Cancel
               </Button>
               <Button type="submit" disabled={loading}>
-                {loading ? "Saving..." : "Save"}
+                {loading ? (
+                  <>
+                    <Loader size="sm" className="mr-2" />
+                    Saving...
+                  </>
+                ) : (
+                  "Save"
+                )}
               </Button>
             </div>
           </form>

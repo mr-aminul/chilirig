@@ -7,6 +7,7 @@ import { SectionContainer } from "@/components/SectionContainer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Loader } from "@/components/ui/loader";
 import { useCart } from "@/lib/store";
 import { formatPrice } from "@/lib/utils";
 import Image from "next/image";
@@ -16,6 +17,7 @@ import Link from "next/link";
 export default function CheckoutPage() {
   const { items, updateQuantity, removeItem, getTotal, clearCart } = useCart();
   const [orderPlaced, setOrderPlaced] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     firstName: "",
@@ -29,11 +31,14 @@ export default function CheckoutPage() {
     cvv: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Mock order placement
+    setLoading(true);
+    // Simulate API call
+    await new Promise((resolve) => setTimeout(resolve, 1500));
     setOrderPlaced(true);
     clearCart();
+    setLoading(false);
   };
 
   if (orderPlaced) {
@@ -316,8 +321,16 @@ export default function CheckoutPage() {
                     className="w-full"
                     onClick={handleSubmit}
                     type="submit"
+                    disabled={loading}
                   >
-                    Place Order
+                    {loading ? (
+                      <>
+                        <Loader size="sm" className="mr-2" />
+                        Processing...
+                      </>
+                    ) : (
+                      "Place Order"
+                    )}
                   </Button>
                 </CardContent>
               </Card>
