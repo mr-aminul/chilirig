@@ -7,7 +7,6 @@ import { ShoppingCart, Heart } from "lucide-react";
 import { Product } from "@/data/products";
 import { HeatMeter } from "@/components/HeatMeter";
 import { Button } from "@/components/ui/button";
-import { Loader } from "@/components/ui/loader";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatPrice } from "@/lib/utils";
 import { useCart } from "@/lib/store";
@@ -98,10 +97,7 @@ export function ProductCard({ product }: ProductCardProps) {
               aria-label={`Add ${product.name} to cart`}
             >
               {adding ? (
-                <>
-                  <Loader size="sm" className="mr-2" />
-                  Adding...
-                </>
+                "Adding..."
               ) : (
                 <>
                   <ShoppingCart className="mr-2 h-4 w-4" />

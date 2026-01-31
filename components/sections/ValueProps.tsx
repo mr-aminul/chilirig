@@ -24,7 +24,7 @@ const valueProps = [
   {
     icon: Truck,
     title: "Fast delivery",
-    description: "Ships within 24 hours. Free shipping on orders over $50. Fresh to your door.",
+    description: "Ships within 24 hours. Free shipping on orders over ৳5,000. Fresh to your door.",
   },
 ];
 

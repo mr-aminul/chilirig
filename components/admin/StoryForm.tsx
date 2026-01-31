@@ -5,7 +5,6 @@ import { X, Plus, Trash2, ArrowUp, ArrowDown, GripVertical } from "lucide-react"
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader } from "@/components/ui/loader";
 import { StoryContent, StorySection } from "@/data/story";
 
 interface StoryFormProps {
@@ -474,10 +473,7 @@ export default function StoryForm({ story, onClose }: StoryFormProps) {
               </Button>
               <Button type="submit" disabled={loading}>
                 {loading ? (
-                  <>
-                    <Loader size="sm" className="mr-2" />
-                    Saving...
-                  </>
+                  "Saving..."
                 ) : (
                   "Save Changes"
                 )}

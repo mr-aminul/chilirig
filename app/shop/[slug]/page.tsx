@@ -8,7 +8,6 @@ import { Footer } from "@/components/Footer";
 import { SectionContainer } from "@/components/SectionContainer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader } from "@/components/ui/loader";
 import { HeatMeter } from "@/components/HeatMeter";
 import {
   Accordion,
@@ -178,10 +177,7 @@ export default function ProductPage({ params }: ProductPageProps) {
                     disabled={addingToCart || !product.inStock}
                   >
                     {addingToCart ? (
-                      <>
-                        <Loader size="sm" className="mr-2" />
-                        Adding...
-                      </>
+                      "Adding..."
                     ) : (
                       <>
                         <ShoppingCart className="mr-2 h-5 w-5" />
@@ -200,10 +196,7 @@ export default function ProductPage({ params }: ProductPageProps) {
                     }}
                   >
                     {addingToCart ? (
-                      <>
-                        <Loader size="sm" className="mr-2" />
-                        Processing...
-                      </>
+                      "Processing..."
                     ) : (
                       "Buy Now"
                     )}
@@ -255,7 +248,7 @@ export default function ProductPage({ params }: ProductPageProps) {
                   <AccordionTrigger value="shipping">Shipping</AccordionTrigger>
                   <AccordionContent value="shipping">
                     <p className="text-sm text-muted-foreground">
-                      Free shipping on orders over $50. Ships within 24 hours.
+                      Free shipping on orders over ৳5,000. Ships within 24 hours.
                       Estimated delivery: 3-5 business days.
                     </p>
                   </AccordionContent>

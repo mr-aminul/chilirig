@@ -5,7 +5,6 @@ import { X, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader } from "@/components/ui/loader";
 import { Review } from "@/data/reviews";
 
 interface ReviewFormProps {
@@ -158,10 +157,7 @@ export default function ReviewForm({ review, onClose }: ReviewFormProps) {
               </Button>
               <Button type="submit" disabled={loading}>
                 {loading ? (
-                  <>
-                    <Loader size="sm" className="mr-2" />
-                    Saving...
-                  </>
+                  "Saving..."
                 ) : review ? (
                   "Update Review"
                 ) : (

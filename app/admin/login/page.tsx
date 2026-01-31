@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader } from "@/components/ui/loader";
 import { Lock } from "lucide-react";
 
 export default function AdminLoginPage() {
@@ -80,10 +79,7 @@ export default function AdminLoginPage() {
               disabled={loading || !password}
             >
               {loading ? (
-                <>
-                  <Loader size="sm" className="mr-2" />
-                  Logging in...
-                </>
+                "Logging in..."
               ) : (
                 "Login"
               )}

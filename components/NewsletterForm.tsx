@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader } from "@/components/ui/loader";
 import { Send } from "lucide-react";
 
 export function NewsletterForm() {
@@ -41,10 +40,7 @@ export function NewsletterForm() {
         disabled={loading || submitted}
       >
         {loading ? (
-          <>
-            <Loader size="sm" className="mr-2" />
-            Subscribing...
-          </>
+          "Subscribing..."
         ) : submitted ? (
           "Subscribed!"
         ) : (

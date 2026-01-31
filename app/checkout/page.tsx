@@ -7,7 +7,6 @@ import { SectionContainer } from "@/components/SectionContainer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader } from "@/components/ui/loader";
 import { useCart } from "@/lib/store";
 import { formatPrice } from "@/lib/utils";
 import Image from "next/image";
@@ -306,13 +305,13 @@ export default function CheckoutPage() {
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Shipping</span>
                       <span className="text-gray-900">
-                        {getTotal() >= 50 ? "Free" : formatPrice(5.99)}
+                        {getTotal() >= 5000 ? "Free" : formatPrice(599)}
                       </span>
                     </div>
                     <div className="flex justify-between border-t border-border pt-2 text-lg font-bold">
                       <span className="text-gray-900">Total</span>
                       <span className="text-gray-900">
-                        {formatPrice(getTotal() + (getTotal() >= 50 ? 0 : 5.99))}
+                        {formatPrice(getTotal() + (getTotal() >= 5000 ? 0 : 599))}
                       </span>
                     </div>
                   </div>
@@ -324,10 +323,7 @@ export default function CheckoutPage() {
                     disabled={loading}
                   >
                     {loading ? (
-                      <>
-                        <Loader size="sm" className="mr-2" />
-                        Processing...
-                      </>
+                      "Processing..."
                     ) : (
                       "Place Order"
                     )}

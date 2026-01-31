@@ -87,7 +87,7 @@ export function Hero() {
 
               {/* Microcopy */}
               <p className="text-sm text-white/80 pt-2 drop-shadow-sm">
-                Ships in 24 hours • Free shipping on orders over $50
+                Ships in 24 hours • Free shipping on orders over ৳5,000
               </p>
             </motion.div>
           </div>

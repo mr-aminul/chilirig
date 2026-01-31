@@ -15,7 +15,6 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader } from "@/components/ui/loader";
 import { Product } from "@/data/products";
 import ProductForm from "@/components/admin/ProductForm";
 
@@ -122,7 +121,6 @@ export default function ProductsPage() {
         {/* Products Grid */}
         {loading ? (
           <div className="flex flex-col items-center justify-center py-12 gap-4">
-            <Loader size="lg" className="text-[hsl(var(--primary))]" />
             <p className="text-muted-foreground">Loading products...</p>
           </div>
         ) : filteredProducts.length === 0 ? (
@@ -174,10 +172,10 @@ export default function ProductsPage() {
                 <CardContent>
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-2xl font-bold">${product.price}</p>
+                      <p className="text-2xl font-bold">৳{product.price}</p>
                       {product.originalPrice && (
                         <p className="text-sm text-muted-foreground line-through">
-                          ${product.originalPrice}
+                          ৳{product.originalPrice}
                         </p>
                       )}
                     </div>
