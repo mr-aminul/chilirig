@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 export interface CartItem {
   id: string;
@@ -10,28 +11,37 @@ export interface CartItem {
 
 interface CartStore {
   items: CartItem[];
+  /** Set when an item is added; Header uses this to play "added to cart" animation. */
+  lastAddedAt: number | null;
   addItem: (item: Omit<CartItem, "quantity">) => void;
   removeItem: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
+  clearJustAdded: () => void;
   getTotal: () => number;
   getItemCount: () => number;
 }
 
-export const useCart = create<CartStore>((set, get) => ({
+const CART_STORAGE_KEY = "chilirig-cart";
+
+export const useCart = create<CartStore>()(
+  persist(
+    (set, get) => ({
   items: [],
+  lastAddedAt: null,
   addItem: (item) => {
     const items = get().items;
     const existingItem = items.find((i) => i.id === item.id);
-    
+
     if (existingItem) {
       set({
         items: items.map((i) =>
           i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
         ),
+        lastAddedAt: Date.now(),
       });
     } else {
-      set({ items: [...items, { ...item, quantity: 1 }] });
+      set({ items: [...items, { ...item, quantity: 1 }], lastAddedAt: Date.now() });
     }
   },
   removeItem: (id) => {
@@ -48,7 +58,8 @@ export const useCart = create<CartStore>((set, get) => ({
       ),
     });
   },
-  clearCart: () => set({ items: [] }),
+  clearCart: () => set({ items: [], lastAddedAt: null }),
+  clearJustAdded: () => set({ lastAddedAt: null }),
   getTotal: () => {
     return get().items.reduce(
       (total, item) => total + item.price * item.quantity,
@@ -58,4 +69,10 @@ export const useCart = create<CartStore>((set, get) => ({
   getItemCount: () => {
     return get().items.reduce((count, item) => count + item.quantity, 0);
   },
-}));
+}),
+    {
+      name: CART_STORAGE_KEY,
+      partialize: (state) => ({ items: state.items }),
+    }
+  )
+);

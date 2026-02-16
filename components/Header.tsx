@@ -1,15 +1,60 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { ShoppingCart, Menu, X } from "lucide-react";
 import { useCart } from "@/lib/store";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { motion } from "framer-motion";
+
+const INACTIVITY_MS = 3000;
+const IDLE_CHECK_INTERVAL_MS = 500;
 
 export function Header() {
   const itemCount = useCart((state) => state.getItemCount());
+  const lastAddedAt = useCart((state) => state.lastAddedAt);
+  const clearJustAdded = useCart((state) => state.clearJustAdded);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [bounce, setBounce] = useState(false);
+  const [attractAttention, setAttractAttention] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const lastActivityRef = useRef(Date.now());
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!lastAddedAt) return;
+    setBounce(true);
+    const t = setTimeout(() => {
+      setBounce(false);
+      clearJustAdded();
+    }, 600);
+    return () => clearTimeout(t);
+  }, [lastAddedAt, clearJustAdded]);
+
+  // When user is inactive for 3s and cart has items, grab attention; clear on any activity
+  useEffect(() => {
+    const markActive = () => {
+      lastActivityRef.current = Date.now();
+      setAttractAttention(false);
+    };
+
+    const events = ["mousedown", "mousemove", "keydown", "scroll", "touchstart"];
+    events.forEach((ev) => window.addEventListener(ev, markActive));
+
+    const interval = setInterval(() => {
+      if (itemCount > 0 && Date.now() - lastActivityRef.current >= INACTIVITY_MS) {
+        setAttractAttention(true);
+      }
+    }, IDLE_CHECK_INTERVAL_MS);
+
+    return () => {
+      events.forEach((ev) => window.removeEventListener(ev, markActive));
+      clearInterval(interval);
+    };
+  }, [itemCount]);
 
   const navLinks = [
     { href: "/story", label: "Story" },
@@ -111,21 +156,44 @@ export function Header() {
         )}
       </div>
 
-      {/* Floating Cart Bubble - Only shows when items are in cart */}
-      {itemCount > 0 && (
-        <Link 
-          href="/checkout" 
+      {/* Floating Cart Bubble - Only show after mount to avoid hydration mismatch with persisted cart */}
+      {mounted && itemCount > 0 && (
+        <Link
+          href="/checkout"
           className="fixed bottom-6 right-6 z-50 group"
           aria-label="Shopping cart"
         >
-          <div className="relative">
-            <div className="w-14 h-14 rounded-full bg-[hsl(var(--primary))] shadow-lg shadow-black/20 flex items-center justify-center transition-all duration-300 hover:scale-110 hover:shadow-xl hover:shadow-black/30">
+          <motion.div
+            className="relative"
+            initial={{ scale: 0 }}
+            animate={{
+              scale: bounce
+                ? [1, 1.4, 1]
+                : attractAttention
+                  ? [1, 1.12, 1]
+                  : 1,
+            }}
+            transition={
+              bounce
+                ? { duration: 0.4, ease: "easeOut" }
+                : attractAttention
+                  ? { duration: 1.1, repeat: Infinity, repeatDelay: 0.5 }
+                  : { type: "spring", stiffness: 400, damping: 28 }
+            }
+          >
+            <div className={`w-14 h-14 rounded-full bg-[hsl(var(--primary))] shadow-lg shadow-black/20 flex items-center justify-center transition-all duration-300 group-hover:shadow-xl group-hover:shadow-black/30 ${attractAttention ? "ring-4 ring-[hsl(var(--primary))] ring-opacity-60 animate-pulse" : ""}`}>
               <ShoppingCart className="h-6 w-6 text-white" />
             </div>
-            <span className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-white text-xs font-bold text-[hsl(var(--primary))] shadow-lg ring-2 ring-[hsl(var(--primary))]/20 animate-pulse">
+            <motion.span
+              key={itemCount}
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: "spring", stiffness: 500, damping: 25 }}
+              className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-white text-xs font-bold text-[hsl(var(--primary))] shadow-lg ring-2 ring-[hsl(var(--primary))]/20"
+            >
               {itemCount}
-            </span>
-          </div>
+            </motion.span>
+          </motion.div>
         </Link>
       )}
     </header>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { SectionContainer } from "@/components/SectionContainer";
@@ -10,34 +10,219 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCart } from "@/lib/store";
 import { formatPrice } from "@/lib/utils";
 import Image from "next/image";
-import { Minus, Plus, Trash2 } from "lucide-react";
+import { Minus, Plus, Trash2, Copy, Check } from "lucide-react";
 import Link from "next/link";
+
+interface PathaoCity {
+  city_id: number;
+  city_name: string;
+}
+interface PathaoZone {
+  zone_id: number;
+  zone_name: string;
+}
+interface PathaoArea {
+  area_id: number;
+  area_name: string;
+}
 
 export default function CheckoutPage() {
   const { items, updateQuantity, removeItem, getTotal, clearCart } = useCart();
   const [orderPlaced, setOrderPlaced] = useState(false);
+  const [orderId, setOrderId] = useState<string | null>(null);
+  const [pathaoError, setPathaoError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     email: "",
-    firstName: "",
-    lastName: "",
+    fullName: "",
+    phone: "",
+    secondaryPhone: "",
     address: "",
-    city: "",
-    state: "",
-    zip: "",
-    cardNumber: "",
-    expiryDate: "",
-    cvv: "",
+    cityId: "",
+    cityName: "",
+    zoneId: "",
+    zoneName: "",
+    areaId: "",
+    areaName: "",
   });
+  const [showSecondaryPhone, setShowSecondaryPhone] = useState(false);
+  const [cities, setCities] = useState<PathaoCity[]>([]);
+  const [zones, setZones] = useState<PathaoZone[]>([]);
+  const [areas, setAreas] = useState<PathaoArea[]>([]);
+  const [citiesLoading, setCitiesLoading] = useState(true);
+  const [zonesLoading, setZonesLoading] = useState(false);
+  const [areasLoading, setAreasLoading] = useState(false);
+  const [shippingPrice, setShippingPrice] = useState<number | null>(null);
+  const [shippingPriceLoading, setShippingPriceLoading] = useState(false);
+  const [shippingPriceError, setShippingPriceError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  const cartWeightKg = Math.max(0.5, items.reduce((sum, i) => sum + i.quantity * 0.5, 0));
+
+  useEffect(() => {
+    fetch("/api/pathao/cities")
+      .then((r) => r.json())
+      .then((j) => {
+        if (j.success && Array.isArray(j.data)) setCities(j.data);
+      })
+      .catch(() => {})
+      .finally(() => setCitiesLoading(false));
+  }, []);
+
+  const loadZones = useCallback((cityId: string) => {
+    if (!cityId) {
+      setZones([]);
+      setAreas([]);
+      setShippingPrice(null);
+      return;
+    }
+    setZonesLoading(true);
+    setZones([]);
+    setAreas([]);
+    setShippingPrice(null);
+    setFormData((prev) => ({ ...prev, zoneId: "", zoneName: "", areaId: "", areaName: "" }));
+    fetch(`/api/pathao/zones?city_id=${encodeURIComponent(cityId)}`)
+      .then((r) => r.json())
+      .then((j) => {
+        if (j.success && Array.isArray(j.data)) setZones(j.data);
+      })
+      .catch(() => {})
+      .finally(() => setZonesLoading(false));
+  }, []);
+
+  const loadAreas = useCallback((zoneId: string) => {
+    if (!zoneId) {
+      setAreas([]);
+      setShippingPrice(null);
+      return;
+    }
+    setAreasLoading(true);
+    setAreas([]);
+    setShippingPrice(null);
+    setFormData((prev) => ({ ...prev, areaId: "", areaName: "" }));
+    fetch(`/api/pathao/areas?zone_id=${encodeURIComponent(zoneId)}`)
+      .then((r) => r.json())
+      .then((j) => {
+        if (j.success && Array.isArray(j.data)) setAreas(j.data);
+      })
+      .catch(() => {})
+      .finally(() => setAreasLoading(false));
+  }, []);
+
+  const loadShippingPrice = useCallback(
+    (cityId: string, zoneId: string, itemWeight: number) => {
+      if (!cityId || !zoneId) {
+        setShippingPrice(null);
+        setShippingPriceError(null);
+        return;
+      }
+      setShippingPriceLoading(true);
+      setShippingPrice(null);
+      setShippingPriceError(null);
+      fetch("/api/pathao/price", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          city_id: Number(cityId),
+          zone_id: Number(zoneId),
+          item_weight: itemWeight,
+        }),
+      })
+        .then((r) => r.json())
+        .then((j) => {
+          if (j.success && typeof j.price === "number") {
+            setShippingPrice(j.price);
+            setShippingPriceError(null);
+          } else {
+            setShippingPriceError(j.error || "Could not get shipping rate");
+          }
+        })
+        .catch(() => {
+          setShippingPriceError("Could not load shipping rate");
+        })
+        .finally(() => setShippingPriceLoading(false));
+    },
+    []
+  );
+
+  useEffect(() => {
+    if (formData.zoneId && formData.cityId) {
+      loadShippingPrice(formData.cityId, formData.zoneId, cartWeightKg);
+    } else {
+      setShippingPrice(null);
+      setShippingPriceError(null);
+    }
+  }, [formData.cityId, formData.zoneId, cartWeightKg, loadShippingPrice]);
+
+  const copyOrderId = () => {
+    if (!orderId) return;
+    navigator.clipboard.writeText(orderId).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     setLoading(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    setOrderPlaced(true);
-    clearCart();
-    setLoading(false);
+
+    const subtotal = getTotal();
+    const pathaoShipping = shippingPrice ?? 0;
+    // Pathao keeps 1% of amount collected as COD fee. So we set amount_to_collect
+    // so that after 1% deduction we receive subtotal + delivery: 0.99 * total = subtotal + delivery
+    const total = Math.round((subtotal + pathaoShipping) / 0.99 * 100) / 100;
+    const shippingCost = total - subtotal; // delivery + COD fee (what customer pays on top of products)
+
+    const payload = {
+      email: formData.email,
+      fullName: formData.fullName.trim(),
+      phone: formData.phone.trim(),
+      ...(formData.secondaryPhone.trim() && {
+        secondaryPhone: formData.secondaryPhone.trim(),
+      }),
+      address: formData.address.trim(),
+      city_id: Number(formData.cityId),
+      zone_id: Number(formData.zoneId),
+      area_id: formData.areaId ? Number(formData.areaId) : 0,
+      city_name: formData.cityName,
+      zone_name: formData.zoneName,
+      area_name: formData.areaName || "",
+      items: items.map((item) => ({
+        id: item.id,
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+      })),
+      subtotal,
+      shipping: shippingCost,
+      total,
+    };
+
+    try {
+      const res = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || "Failed to place order. Please try again.");
+        setLoading(false);
+        return;
+      }
+
+      setOrderId(data.orderId ?? null);
+      setPathaoError(data.pathaoError ?? null);
+      setOrderPlaced(true);
+      clearCart();
+    } catch {
+      setError("Network error. Please check your connection and try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (orderPlaced) {
@@ -65,10 +250,39 @@ export default function CheckoutPage() {
               <h1 className="mb-4 font-display text-4xl font-bold text-gray-900 sm:text-5xl">
                 Order Confirmed!
               </h1>
-              <p className="mb-8 text-lg text-gray-600">
-                Thank you for your order. You'll receive a confirmation email
-                shortly.
+              <p className="mb-6 text-lg text-gray-600">
+                We&apos;ll contact you soon to give you a spicy delivery. Pay when your order arrives—cash on delivery.
               </p>
+              {pathaoError && (
+                <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-left text-sm text-amber-800">
+                  <strong>Note:</strong> Your order is confirmed, but we couldn&apos;t create the Pathao delivery automatically. We&apos;ll arrange delivery and contact you soon.
+                  <details className="mt-2">
+                    <summary className="cursor-pointer text-amber-700">Technical details</summary>
+                    <pre className="mt-1 overflow-auto text-xs">{pathaoError}</pre>
+                  </details>
+                </div>
+              )}
+              {orderId && (
+                <div className="mb-8 flex flex-col items-center gap-2">
+                  <p className="text-sm font-medium text-gray-600">Your order ID</p>
+                  <button
+                    type="button"
+                    onClick={copyOrderId}
+                    className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 font-mono text-sm text-gray-800 transition-colors hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] focus:ring-offset-2"
+                    aria-label="Copy order ID"
+                  >
+                    <span>{orderId}</span>
+                    {copied ? (
+                      <Check className="h-4 w-4 text-green-600" aria-hidden />
+                    ) : (
+                      <Copy className="h-4 w-4 text-gray-500" aria-hidden />
+                    )}
+                  </button>
+                  <p className="text-xs text-gray-500">
+                    {copied ? "Copied!" : "Click to copy"}
+                  </p>
+                </div>
+              )}
               <Link href="/shop">
                 <Button size="lg">Continue Shopping</Button>
               </Link>
@@ -114,6 +328,11 @@ export default function CheckoutPage() {
           </h1>
           <div className="grid gap-8 lg:grid-cols-3">
             <div className="lg:col-span-2">
+              {error && (
+                <div className="mb-6 rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                  {error}
+                </div>
+              )}
               <form onSubmit={handleSubmit} className="space-y-8">
                 {/* Shipping Information */}
                 <Card>
@@ -121,6 +340,108 @@ export default function CheckoutPage() {
                     <CardTitle>Shipping Information</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
+                    {/* City, Zone, Area — one row first */}
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                      <div className="space-y-1.5">
+                        <label className="text-sm font-medium text-gray-700">City</label>
+                        <select
+                          value={formData.cityId}
+                          onChange={(e) => {
+                            const opt = e.target.options[e.target.selectedIndex];
+                            const name = opt?.text ?? "";
+                            setFormData((prev) => ({
+                              ...prev,
+                              cityId: e.target.value,
+                              cityName: name,
+                              zoneId: "",
+                              zoneName: "",
+                              areaId: "",
+                              areaName: "",
+                            }));
+                            loadZones(e.target.value);
+                          }}
+                          required
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                        >
+                          <option value="">Select city</option>
+                          {citiesLoading && <option disabled>Loading...</option>}
+                          {cities.map((c) => (
+                            <option key={c.city_id} value={c.city_id}>
+                              {c.city_name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-sm font-medium text-gray-700">Zone</label>
+                        <select
+                          value={formData.zoneId}
+                          onChange={(e) => {
+                            const opt = e.target.options[e.target.selectedIndex];
+                            const name = opt?.text ?? "";
+                            setFormData((prev) => ({
+                              ...prev,
+                              zoneId: e.target.value,
+                              zoneName: name,
+                              areaId: "",
+                              areaName: "",
+                            }));
+                            loadAreas(e.target.value);
+                          }}
+                          required
+                          disabled={!formData.cityId || zonesLoading}
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50"
+                        >
+                          <option value="">Select zone</option>
+                          {zonesLoading && <option disabled>Loading...</option>}
+                          {zones.map((z) => (
+                            <option key={z.zone_id} value={z.zone_id}>
+                              {z.zone_name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-sm font-medium text-gray-700">Area</label>
+                        <select
+                          value={formData.areaId}
+                          onChange={(e) => {
+                            const opt = e.target.options[e.target.selectedIndex];
+                            setFormData((prev) => ({
+                              ...prev,
+                              areaId: e.target.value,
+                              areaName: opt?.text ?? "",
+                            }));
+                          }}
+                        disabled={!formData.zoneId || areasLoading}
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50"
+                      >
+                        <option value="">Select area (optional)</option>
+                          {areasLoading && <option disabled>Loading...</option>}
+                          {areas.map((a) => (
+                            <option key={a.area_id} value={a.area_id}>
+                              {a.area_name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-medium text-gray-700">
+                        Detailed address
+                      </label>
+                      <Input
+                        type="text"
+                        placeholder="House, road, block, landmark (e.g. House Ka-167/A, Land Office Road, Bottola)"
+                        value={formData.address}
+                        onChange={(e) =>
+                          setFormData({ ...formData, address: e.target.value })
+                        }
+                        required
+                      />
+                    </div>
+
                     <Input
                       type="email"
                       placeholder="Email"
@@ -130,104 +451,57 @@ export default function CheckoutPage() {
                       }
                       required
                     />
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <Input
-                        type="text"
-                        placeholder="First Name"
-                        value={formData.firstName}
-                        onChange={(e) =>
-                          setFormData({ ...formData, firstName: e.target.value })
-                        }
-                        required
-                      />
-                      <Input
-                        type="text"
-                        placeholder="Last Name"
-                        value={formData.lastName}
-                        onChange={(e) =>
-                          setFormData({ ...formData, lastName: e.target.value })
-                        }
-                        required
-                      />
-                    </div>
                     <Input
                       type="text"
-                      placeholder="Address"
-                      value={formData.address}
+                      placeholder="Full name"
+                      value={formData.fullName}
                       onChange={(e) =>
-                        setFormData({ ...formData, address: e.target.value })
+                        setFormData({ ...formData, fullName: e.target.value })
                       }
                       required
                     />
-                    <div className="grid gap-4 sm:grid-cols-3">
-                      <Input
-                        type="text"
-                        placeholder="City"
-                        value={formData.city}
-                        onChange={(e) =>
-                          setFormData({ ...formData, city: e.target.value })
-                        }
-                        required
-                      />
-                      <Input
-                        type="text"
-                        placeholder="State"
-                        value={formData.state}
-                        onChange={(e) =>
-                          setFormData({ ...formData, state: e.target.value })
-                        }
-                        required
-                      />
-                      <Input
-                        type="text"
-                        placeholder="ZIP Code"
-                        value={formData.zip}
-                        onChange={(e) =>
-                          setFormData({ ...formData, zip: e.target.value })
-                        }
-                        required
-                      />
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="tel"
+                          placeholder="Phone (e.g. 01712345678)"
+                          value={formData.phone}
+                          onChange={(e) =>
+                            setFormData({ ...formData, phone: e.target.value })
+                          }
+                          minLength={11}
+                          maxLength={14}
+                          required
+                          className="flex-1"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowSecondaryPhone((v) => !v)}
+                          className="whitespace-nowrap text-sm font-medium text-[hsl(var(--primary))] hover:underline focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded px-2 py-1"
+                        >
+                          {showSecondaryPhone ? "− Remove" : "+ Add Secondary Number"}
+                        </button>
+                      </div>
+                      {showSecondaryPhone && (
+                        <Input
+                          type="tel"
+                          placeholder="Secondary phone (optional)"
+                          value={formData.secondaryPhone}
+                          onChange={(e) =>
+                            setFormData({ ...formData, secondaryPhone: e.target.value })
+                          }
+                          minLength={11}
+                          maxLength={14}
+                          className="max-w-xs"
+                        />
+                      )}
                     </div>
                   </CardContent>
                 </Card>
 
-                {/* Payment Information */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Payment Information</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <Input
-                      type="text"
-                      placeholder="Card Number"
-                      value={formData.cardNumber}
-                      onChange={(e) =>
-                        setFormData({ ...formData, cardNumber: e.target.value })
-                      }
-                      required
-                    />
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <Input
-                        type="text"
-                        placeholder="MM/YY"
-                        value={formData.expiryDate}
-                        onChange={(e) =>
-                          setFormData({ ...formData, expiryDate: e.target.value })
-                        }
-                        required
-                      />
-                      <Input
-                        type="text"
-                        placeholder="CVV"
-                        value={formData.cvv}
-                        onChange={(e) =>
-                          setFormData({ ...formData, cvv: e.target.value })
-                        }
-                        required
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
+                <p className="text-sm text-gray-600">
+                  Payment: <strong>Cash on delivery</strong>—pay when your order arrives.
+                </p>
               </form>
             </div>
 
@@ -302,16 +576,38 @@ export default function CheckoutPage() {
                       <span className="text-gray-600">Subtotal</span>
                       <span className="text-gray-900">{formatPrice(getTotal())}</span>
                     </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Shipping</span>
-                      <span className="text-gray-900">
-                        {getTotal() >= 5000 ? "Free" : formatPrice(599)}
-                      </span>
+                    <div className="flex flex-col gap-0.5">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Shipping</span>
+                        <span className="text-gray-900">
+                          {shippingPriceLoading
+                            ? "Calculating..."
+                            : shippingPrice != null
+                              ? formatPrice(
+                                  (getTotal() + (shippingPrice ?? 0)) / 0.99 -
+                                    getTotal()
+                                )
+                              : formData.cityId && formData.zoneId
+                                ? "—"
+                                : "Select City & Zone"}
+                        </span>
+                      </div>
+                      {shippingPriceError && (
+                        <p className="text-xs text-amber-600">
+                          {shippingPriceError}. You can still place the order.
+                        </p>
+                      )}
                     </div>
                     <div className="flex justify-between border-t border-border pt-2 text-lg font-bold">
                       <span className="text-gray-900">Total</span>
                       <span className="text-gray-900">
-                        {formatPrice(getTotal() + (getTotal() >= 5000 ? 0 : 599))}
+                        {formatPrice(
+                          shippingPrice != null
+                            ? Math.round(
+                                (getTotal() + (shippingPrice ?? 0)) / 0.99 * 100
+                              ) / 100
+                            : getTotal()
+                        )}
                       </span>
                     </div>
                   </div>
@@ -320,7 +616,7 @@ export default function CheckoutPage() {
                     className="w-full"
                     onClick={handleSubmit}
                     type="submit"
-                    disabled={loading}
+                    disabled={loading || shippingPriceLoading}
                   >
                     {loading ? (
                       "Processing..."
