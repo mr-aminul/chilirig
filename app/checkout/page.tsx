@@ -7,11 +7,12 @@ import { SectionContainer } from "@/components/SectionContainer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useCart } from "@/lib/store";
+import { useCart, useOrders } from "@/lib/store";
 import { formatPrice } from "@/lib/utils";
 import Image from "next/image";
-import { Minus, Plus, Trash2, Copy, Check } from "lucide-react";
+import { Minus, Plus, Trash2, Copy, Check, ExternalLink } from "lucide-react";
 import Link from "next/link";
+import { motion } from "framer-motion";
 
 interface PathaoCity {
   city_id: number;
@@ -28,8 +29,11 @@ interface PathaoArea {
 
 export default function CheckoutPage() {
   const { items, updateQuantity, removeItem, getTotal, clearCart } = useCart();
+  const addOrder = useOrders((s) => s.addOrder);
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
+  const [pathaoConsignmentId, setPathaoConsignmentId] = useState<string | null>(null);
+  const [orderPhone, setOrderPhone] = useState<string | null>(null);
   const [pathaoError, setPathaoError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -56,7 +60,7 @@ export default function CheckoutPage() {
   const [shippingPrice, setShippingPrice] = useState<number | null>(null);
   const [shippingPriceLoading, setShippingPriceLoading] = useState(false);
   const [shippingPriceError, setShippingPriceError] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [copiedField, setCopiedField] = useState<"order" | "tracking" | null>(null);
 
   const cartWeightKg = Math.max(0.5, items.reduce((sum, i) => sum + i.quantity * 0.5, 0));
 
@@ -155,11 +159,11 @@ export default function CheckoutPage() {
     }
   }, [formData.cityId, formData.zoneId, cartWeightKg, loadShippingPrice]);
 
-  const copyOrderId = () => {
-    if (!orderId) return;
-    navigator.clipboard.writeText(orderId).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+  const copyToClipboard = (text: string, field: "order" | "tracking") => {
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+      setCopiedField(field);
+      setTimeout(() => setCopiedField(null), 2000);
     });
   };
 
@@ -215,8 +219,18 @@ export default function CheckoutPage() {
       }
 
       setOrderId(data.orderId ?? null);
+      setPathaoConsignmentId(data.pathaoConsignmentId ?? null);
+      setOrderPhone(formData.phone.trim() || null);
       setPathaoError(data.pathaoError ?? null);
       setOrderPlaced(true);
+      addOrder({
+        orderId: data.orderId,
+        date: new Date().toISOString(),
+        pathaoConsignmentId: data.pathaoConsignmentId ?? null,
+        orderPhone: formData.phone.trim() || null,
+        total,
+        itemsSummary: items.map((i) => `${i.name} × ${i.quantity}`).join(" | "),
+      });
       clearCart();
     } catch {
       setError("Network error. Please check your connection and try again.");
@@ -225,36 +239,70 @@ export default function CheckoutPage() {
     }
   };
 
+  // Normalize phone for Pathao tracking URL (11 digits, 01...)
+  const trackingPhone =
+    orderPhone != null
+      ? orderPhone.replace(/\D/g, "").replace(/^(\d{10})$/, "0$1").slice(0, 11)
+      : null;
+  const pathaoTrackingUrl =
+    pathaoConsignmentId && trackingPhone && trackingPhone.length === 11
+      ? `https://merchant.pathao.com/tracking?consignment_id=${encodeURIComponent(pathaoConsignmentId)}&phone=${encodeURIComponent(trackingPhone)}`
+      : null;
+
   if (orderPlaced) {
     return (
       <>
         <Header />
-        <main>
+        <main className="min-h-[80vh]">
           <SectionContainer>
-            <div className="mx-auto max-w-2xl text-center">
-              <div className="mb-6 inline-flex h-16 w-16 items-center justify-center rounded-full bg-crimson-600">
-                <svg
-                  className="h-8 w-8 text-gray-900"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+            <div className="mx-auto max-w-2xl">
+              {/* Success hero - animated completed icon */}
+              <div className="flex flex-col items-center text-center">
+                <motion.div
+                  className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-[hsl(var(--primary))] shadow-lg shadow-[hsl(var(--primary))]/30 ring-4 ring-[hsl(var(--primary))]/20"
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{
+                    scale: [0, 1, 1],
+                    opacity: 1,
+                  }}
+                  transition={{
+                    scale: {
+                      times: [0, 0.6, 1],
+                      duration: 0.5,
+                    },
+                    opacity: { duration: 0.2 },
+                  }}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
+                  <motion.div
+                    initial={{ scale: 0.5, opacity: 0 }}
+                    animate={{
+                      scale: 1,
+                      opacity: 1,
+                      boxShadow: [
+                        "0 0 0 0 rgba(255,255,255,0.4)",
+                        "0 0 0 8px rgba(255,255,255,0)",
+                      ],
+                    }}
+                    transition={{
+                      scale: { delay: 0.15, duration: 0.25, ease: "easeOut" },
+                      opacity: { delay: 0.1, duration: 0.2 },
+                      boxShadow: { delay: 0.4, duration: 0.6, repeat: Infinity, repeatDelay: 1.5 },
+                    }}
+                    className="flex items-center justify-center rounded-full"
+                  >
+                    <Check className="h-10 w-10 text-white" strokeWidth={2.5} aria-hidden />
+                  </motion.div>
+                </motion.div>
+                <h1 className="mb-3 font-display text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+                  Order confirmed
+                </h1>
+                <p className="mb-8 max-w-md text-base text-gray-600">
+                  We&apos;ll get your order to you soon. Pay when it arrives—cash on delivery.
+                </p>
               </div>
-              <h1 className="mb-4 font-display text-4xl font-bold text-gray-900 sm:text-5xl">
-                Order Confirmed!
-              </h1>
-              <p className="mb-6 text-lg text-gray-600">
-                We&apos;ll contact you soon to give you a spicy delivery. Pay when your order arrives—cash on delivery.
-              </p>
+
               {pathaoError && (
-                <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-left text-sm text-amber-800">
+                <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50/80 px-4 py-3 text-left text-sm text-amber-800">
                   <strong>Note:</strong> Your order is confirmed, but we couldn&apos;t create the Pathao delivery automatically. We&apos;ll arrange delivery and contact you soon.
                   <details className="mt-2">
                     <summary className="cursor-pointer text-amber-700">Technical details</summary>
@@ -262,30 +310,84 @@ export default function CheckoutPage() {
                   </details>
                 </div>
               )}
-              {orderId && (
-                <div className="mb-8 flex flex-col items-center gap-2">
-                  <p className="text-sm font-medium text-gray-600">Your order ID</p>
-                  <button
-                    type="button"
-                    onClick={copyOrderId}
-                    className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 font-mono text-sm text-gray-800 transition-colors hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] focus:ring-offset-2"
-                    aria-label="Copy order ID"
-                  >
-                    <span>{orderId}</span>
-                    {copied ? (
-                      <Check className="h-4 w-4 text-green-600" aria-hidden />
-                    ) : (
-                      <Copy className="h-4 w-4 text-gray-500" aria-hidden />
+
+              {/* Order Summary card - both IDs in one line with individual copy buttons */}
+              {(orderId || pathaoConsignmentId) && (
+                <div className="mb-6 overflow-hidden rounded-2xl border border-gray-200 bg-gray-50/50 shadow-sm">
+                  <div className="border-b border-gray-200/80 bg-white px-4 py-4 sm:px-5">
+                    <h2 className="text-base font-bold text-gray-900 sm:text-lg">Order Summary</h2>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-x-6 gap-y-3 border-b border-gray-100 bg-white px-4 py-3 sm:px-5">
+                    {orderId && (
+                      <div className="flex min-w-0 flex-1 items-center gap-2 sm:flex-initial">
+                        <span className="shrink-0 text-sm font-medium text-gray-600">Order ID</span>
+                        <span className="min-w-0 truncate font-mono text-sm font-semibold text-gray-900 tracking-tight">
+                          {orderId}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => copyToClipboard(orderId, "order")}
+                          className="shrink-0 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] focus:ring-offset-1"
+                          aria-label="Copy order ID"
+                        >
+                          {copiedField === "order" ? (
+                            <Check className="h-4 w-4 text-emerald-600" aria-hidden />
+                          ) : (
+                            <Copy className="h-4 w-4" aria-hidden />
+                          )}
+                        </button>
+                      </div>
                     )}
-                  </button>
-                  <p className="text-xs text-gray-500">
-                    {copied ? "Copied!" : "Click to copy"}
-                  </p>
+                    {pathaoConsignmentId && (
+                      <div className="flex min-w-0 flex-1 items-center gap-2 sm:flex-initial">
+                        <span className="shrink-0 text-sm font-medium text-gray-600">Tracking ID</span>
+                        <span className="min-w-0 truncate font-mono text-sm font-semibold text-gray-900 tracking-tight">
+                          {pathaoConsignmentId}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => copyToClipboard(pathaoConsignmentId, "tracking")}
+                          className="shrink-0 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] focus:ring-offset-1"
+                          aria-label="Copy tracking ID"
+                        >
+                          {copiedField === "tracking" ? (
+                            <Check className="h-4 w-4 text-emerald-600" aria-hidden />
+                          ) : (
+                            <Copy className="h-4 w-4" aria-hidden />
+                          )}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <div className="border-t border-gray-100 bg-gray-50/50 px-4 py-4 sm:px-5">
+                    {pathaoTrackingUrl && (
+                      <a
+                        href={pathaoTrackingUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex w-full items-center justify-center gap-2 rounded-xl bg-[hsl(var(--primary))] px-4 py-3.5 text-sm font-semibold text-[hsl(var(--primary-foreground))] transition-colors hover:bg-[hsl(var(--primary-hover))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] focus:ring-offset-2"
+                      >
+                        <ExternalLink className="h-4 w-4 shrink-0" aria-hidden />
+                        Track Delivery
+                      </a>
+                    )}
+                  </div>
                 </div>
               )}
-              <Link href="/shop">
-                <Button size="lg">Continue Shopping</Button>
-              </Link>
+
+              {pathaoTrackingUrl && (
+                <p className="mb-6 text-center text-sm font-medium text-emerald-600">
+                  Your order is confirmed and in transit.
+                </p>
+              )}
+
+              <div className="flex flex-col items-center sm:flex-row sm:justify-center">
+                <Link href="/shop" className="w-full sm:w-auto">
+                  <Button size="lg" className="w-full sm:w-auto">
+                    Continue shopping
+                  </Button>
+                </Link>
+              </div>
             </div>
           </SectionContainer>
         </main>

@@ -100,7 +100,7 @@ export function ProductCard({ product }: ProductCardProps) {
                 "Adding..."
               ) : (
                 <>
-                  <ShoppingCart className="mr-2 h-4 w-4" />
+                  <ShoppingCart className="h-4 w-4" />
                   Add
                 </>
               )}

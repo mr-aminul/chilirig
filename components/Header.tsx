@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ShoppingCart, Menu, X } from "lucide-react";
-import { useCart } from "@/lib/store";
+import { useCart, useOrders } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
@@ -14,6 +14,7 @@ export function Header() {
   const itemCount = useCart((state) => state.getItemCount());
   const lastAddedAt = useCart((state) => state.lastAddedAt);
   const clearJustAdded = useCart((state) => state.clearJustAdded);
+  const orderCount = useOrders((state) => state.orders.length);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [bounce, setBounce] = useState(false);
   const [attractAttention, setAttractAttention] = useState(false);
@@ -60,6 +61,7 @@ export function Header() {
     { href: "/story", label: "Story" },
     { href: "/recipes", label: "Recipes" },
     { href: "/faq", label: "FAQ" },
+    ...(mounted && orderCount > 0 ? [{ href: "/orders", label: "Your Orders" }] : []),
   ];
 
   return (

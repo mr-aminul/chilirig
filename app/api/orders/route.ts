@@ -97,45 +97,7 @@ export async function POST(request: NextRequest) {
     const shippingCost = typeof shipping === "number" ? shipping : 0;
     const totalWeight = Math.max(0.5, items.reduce((sum, i) => sum + i.quantity * 0.5, 0));
 
-    const row = {
-      orderId,
-      date: new Date().toISOString(),
-      email,
-      fullName,
-      phone: recipientPhone,
-      secondaryPhone: secondaryPhone ? normalizePathaoPhone(secondaryPhone) : "",
-      address,
-      city: city_name,
-      zone: zone_name,
-      area: area_name,
-      items: itemsSummary,
-      subtotal,
-      shipping: shippingCost,
-      total,
-      status: "New",
-    };
-
-    const scriptUrl = process.env.GOOGLE_SCRIPT_ORDERS_URL;
-    if (scriptUrl) {
-      const res = await fetch(scriptUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(row),
-      });
-      if (!res.ok) {
-        const text = await res.text();
-        console.error("Google Apps Script error:", res.status, text);
-        return NextResponse.json(
-          { success: false, error: "Failed to save order to sheet" },
-          { status: 502 }
-        );
-      }
-    } else {
-      // No sheet configured: log only (useful for local/dev)
-      console.log("[Orders] No GOOGLE_SCRIPT_ORDERS_URL; order logged:", row);
-    }
-
-    // Create Pathao Courier delivery order if configured
+    // Create Pathao Courier delivery order first so we can save consignment ID to the sheet
     let pathaoConsignmentId: string | null = null;
     let pathaoError: string | null = null;
 
@@ -189,6 +151,45 @@ export async function POST(request: NextRequest) {
           console.error("[Orders] Pathao failed:", pathaoError);
         }
       }
+    }
+
+    const row = {
+      orderId,
+      date: new Date().toISOString(),
+      email,
+      fullName,
+      phone: recipientPhone,
+      secondaryPhone: secondaryPhone ? normalizePathaoPhone(secondaryPhone) : "",
+      address,
+      city: city_name,
+      zone: zone_name,
+      area: area_name,
+      items: itemsSummary,
+      subtotal,
+      shipping: shippingCost,
+      total,
+      status: "New",
+      pathaoConsignmentId: pathaoConsignmentId ?? "",
+    };
+
+    const scriptUrl = process.env.GOOGLE_SCRIPT_ORDERS_URL;
+    if (scriptUrl) {
+      const res = await fetch(scriptUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(row),
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        console.error("Google Apps Script error:", res.status, text);
+        return NextResponse.json(
+          { success: false, error: "Failed to save order to sheet" },
+          { status: 502 }
+        );
+      }
+    } else {
+      // No sheet configured: log only (useful for local/dev)
+      console.log("[Orders] No GOOGLE_SCRIPT_ORDERS_URL; order logged:", row);
     }
 
     return NextResponse.json({

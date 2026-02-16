@@ -9,6 +9,16 @@ export interface CartItem {
   quantity: number;
 }
 
+/** Single placed order saved in cache for "Your Orders". */
+export interface PlacedOrder {
+  orderId: string;
+  date: string;
+  pathaoConsignmentId: string | null;
+  orderPhone: string | null;
+  total?: number;
+  itemsSummary?: string;
+}
+
 interface CartStore {
   items: CartItem[];
   /** Set when an item is added; Header uses this to play "added to cart" animation. */
@@ -23,6 +33,13 @@ interface CartStore {
 }
 
 const CART_STORAGE_KEY = "chilirig-cart";
+const ORDERS_STORAGE_KEY = "chilirig-orders";
+
+interface OrdersStore {
+  orders: PlacedOrder[];
+  addOrder: (order: PlacedOrder) => void;
+  getOrderCount: () => number;
+}
 
 export const useCart = create<CartStore>()(
   persist(
@@ -73,6 +90,22 @@ export const useCart = create<CartStore>()(
     {
       name: CART_STORAGE_KEY,
       partialize: (state) => ({ items: state.items }),
+    }
+  )
+);
+
+export const useOrders = create<OrdersStore>()(
+  persist(
+    (set, get) => ({
+      orders: [],
+      addOrder: (order) => {
+        set({ orders: [order, ...get().orders] });
+      },
+      getOrderCount: () => get().orders.length,
+    }),
+    {
+      name: ORDERS_STORAGE_KEY,
+      partialize: (state) => ({ orders: state.orders }),
     }
   )
 );

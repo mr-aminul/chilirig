@@ -29,14 +29,14 @@ export function NewsletterForm() {
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         required
-        className="flex-1"
+        className="flex-1 min-w-0"
         aria-label="Email address"
       />
       <Button 
         type="submit" 
-        size="lg" 
+        size="default" 
         variant="default"
-        className="whitespace-nowrap"
+        className="whitespace-nowrap rounded-lg"
         disabled={loading || submitted}
       >
         {loading ? (
@@ -45,8 +45,8 @@ export function NewsletterForm() {
           "Subscribed!"
         ) : (
           <>
+            <Send className="h-4 w-4" />
             Subscribe
-            <Send className="ml-2 h-4 w-4" />
           </>
         )}
       </Button>
