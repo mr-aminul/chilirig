@@ -223,6 +223,7 @@ export default function CheckoutPage() {
       setOrderPhone(formData.phone.trim() || null);
       setPathaoError(data.pathaoError ?? null);
       setOrderPlaced(true);
+      clearCart(); // Empty cart as soon as order is placed
       addOrder({
         orderId: data.orderId,
         date: new Date().toISOString(),
@@ -231,7 +232,6 @@ export default function CheckoutPage() {
         total,
         itemsSummary: items.map((i) => `${i.name} × ${i.quantity}`).join(" | "),
       });
-      clearCart();
     } catch {
       setError("Network error. Please check your connection and try again.");
     } finally {
