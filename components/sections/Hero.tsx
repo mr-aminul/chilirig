@@ -58,7 +58,7 @@ export function Hero() {
               </h1>
 
               {/* Sub-headline */}
-              <p className="text-xl text-white/90 sm:text-2xl max-w-2xl leading-relaxed drop-shadow-md">
+              <p className="max-w-2xl text-base leading-relaxed text-white/90 drop-shadow-md sm:text-lg">
                 Heat with depth. Flavor with bite. Our premium chili oil is
                 slow-infused with real chilies, garlic, and premium oils. Crafted
                 for those who demand bold taste.

@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import {
   createPathaoOrder,
   normalizePathaoPhone,
 } from "@/lib/pathao";
+import { getSupabaseAdmin } from "@/lib/supabase-server";
 
 export interface OrderItemPayload {
   id: string;
@@ -29,6 +31,31 @@ export interface OrderPayload {
   total: number;
 }
 
+const orderItemSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  price: z.number().nonnegative(),
+  quantity: z.number().int().positive(),
+});
+
+const orderPayloadSchema = z.object({
+  email: z.string().email(),
+  fullName: z.string().min(2),
+  phone: z.string().min(8),
+  secondaryPhone: z.string().min(8).optional(),
+  address: z.string().min(5),
+  city_id: z.number().int().nonnegative(),
+  zone_id: z.number().int().nonnegative(),
+  area_id: z.number().int().nonnegative(),
+  city_name: z.string().min(1),
+  zone_name: z.string().min(1),
+  area_name: z.string(),
+  items: z.array(orderItemSchema).min(1),
+  subtotal: z.number().nonnegative(),
+  shipping: z.number().nonnegative(),
+  total: z.number().nonnegative(),
+});
+
 function generateOrderId(): string {
   const date = new Date();
   const dateStr = date.toISOString().slice(0, 10).replace(/-/g, "");
@@ -38,7 +65,14 @@ function generateOrderId(): string {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = (await request.json()) as OrderPayload;
+    const parsed = orderPayloadSchema.safeParse(await request.json());
+    if (!parsed.success) {
+      return NextResponse.json(
+        { success: false, error: "Invalid order payload" },
+        { status: 400 }
+      );
+    }
+    const body = parsed.data as OrderPayload;
 
     const {
       email,
@@ -57,26 +91,6 @@ export async function POST(request: NextRequest) {
       shipping,
       total,
     } = body;
-
-    if (
-      !email ||
-      !fullName ||
-      !phone ||
-      !address ||
-      city_id == null ||
-      zone_id == null ||
-      !city_name ||
-      !zone_name ||
-      !Array.isArray(items) ||
-      items.length === 0 ||
-      typeof subtotal !== "number" ||
-      typeof total !== "number"
-    ) {
-      return NextResponse.json(
-        { success: false, error: "Missing or invalid order fields (include City & Zone)" },
-        { status: 400 }
-      );
-    }
 
     const recipientPhone = normalizePathaoPhone(phone);
     if (recipientPhone.length !== 11 || !recipientPhone.startsWith("01")) {
@@ -171,6 +185,57 @@ export async function POST(request: NextRequest) {
       status: "New",
       pathaoConsignmentId: pathaoConsignmentId ?? "",
     };
+
+    const supabase = getSupabaseAdmin();
+    const { data: insertedOrder, error: orderInsertError } = await supabase
+      .from("orders")
+      .insert({
+        order_number: orderId,
+        email,
+        full_name: fullName,
+        phone: recipientPhone,
+        secondary_phone: secondaryPhone ? normalizePathaoPhone(secondaryPhone) : null,
+        address,
+        city_id,
+        zone_id,
+        area_id: area_id || null,
+        city_name,
+        zone_name,
+        area_name,
+        subtotal,
+        shipping: shippingCost,
+        total,
+        status: "new",
+        pathao_consignment_id: pathaoConsignmentId,
+        pathao_error: pathaoError,
+      })
+      .select("id")
+      .single();
+
+    if (orderInsertError) {
+      console.error("Supabase order insert error:", orderInsertError);
+      return NextResponse.json(
+        { success: false, error: "Failed to save order" },
+        { status: 502 }
+      );
+    }
+
+    const orderItemsPayload = items.map((item) => ({
+      order_id: insertedOrder.id,
+      product_id: null,
+      product_name: item.name,
+      unit_price: item.price,
+      quantity: item.quantity,
+    }));
+
+    if (orderItemsPayload.length > 0) {
+      const { error: itemsInsertError } = await supabase
+        .from("order_items")
+        .insert(orderItemsPayload);
+      if (itemsInsertError) {
+        console.error("Supabase order items insert error:", itemsInsertError);
+      }
+    }
 
     const scriptUrl = process.env.GOOGLE_SCRIPT_ORDERS_URL;
     if (scriptUrl) {

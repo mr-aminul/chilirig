@@ -1,26 +1,62 @@
+"use client";
+
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { SectionContainer } from "@/components/SectionContainer";
 import { Card, CardContent } from "@/components/ui/card";
 import { HeatMeter } from "@/components/HeatMeter";
 import { Button } from "@/components/ui/button";
-import { getRecipeBySlug } from "@/data/recipes";
+import { Recipe } from "@/data/recipes";
 import { Clock, Users } from "lucide-react";
+import { useParams } from "next/navigation";
+import { getCachedApiJson } from "@/lib/api-cache";
+export default function RecipePage() {
+  const params = useParams<{ slug: string }>();
+  const slug = params?.slug;
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [loading, setLoading] = useState(true);
 
-interface RecipePageProps {
-  params: {
-    slug: string;
-  };
-}
+  useEffect(() => {
+    const loadRecipes = async () => {
+      try {
+        const result = await getCachedApiJson<{ success: boolean; data?: Recipe[] }>(
+          "/api/recipes",
+          { ttlMs: 10 * 60 * 1000 }
+        );
+        if (result.success) {
+          setRecipes(result.data ?? []);
+        }
+      } catch (error) {
+        console.error("Failed to fetch recipes:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadRecipes();
+  }, []);
 
-export default function RecipePage({ params }: RecipePageProps) {
-  const recipe = getRecipeBySlug(params.slug);
+  const recipe = useMemo(() => recipes.find((r) => r.slug === slug), [recipes, slug]);
+
+  if (!loading && !recipe) {
+    notFound();
+  }
 
   if (!recipe) {
-    notFound();
+    return (
+      <>
+        <Header />
+        <main>
+          <SectionContainer>
+            <p className="text-gray-600">Loading recipe...</p>
+          </SectionContainer>
+        </main>
+        <Footer />
+      </>
+    );
   }
 
   return (
@@ -38,7 +74,7 @@ export default function RecipePage({ params }: RecipePageProps) {
           </div>
 
           <div className="mb-12 grid gap-8 lg:grid-cols-2">
-            <div className="relative aspect-square overflow-hidden rounded-2xl bg-gray-100 border border-gray-200">
+            <div className="relative mx-auto aspect-[4/3] w-full max-w-md overflow-hidden rounded-2xl border border-gray-200 bg-gray-100 lg:mx-0 lg:max-w-lg">
               <Image
                 src={recipe.image}
                 alt={recipe.title}
@@ -95,7 +131,7 @@ export default function RecipePage({ params }: RecipePageProps) {
                 </div>
               </div>
 
-              <Link href="/shop">
+              <Link href="/shop" className="inline-block pt-2">
                 <Button size="lg">Shop ChiliRig</Button>
               </Link>
             </div>

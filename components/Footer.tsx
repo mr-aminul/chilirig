@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 const iconClass = "h-5 w-5";
@@ -75,14 +76,24 @@ export function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="border-t border-black/10 bg-[hsl(var(--bg-secondary))]">
-      <div className="container-padding section-padding mx-auto">
+    <footer className="relative overflow-hidden border-t border-white/15">
+      <div className="pointer-events-none absolute inset-0" aria-hidden>
+        <Image
+          src="/images/hero/fire-flames-on-black-background-free-photo.jpg"
+          alt=""
+          fill
+          className="object-cover object-bottom"
+          sizes="100vw"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/90 via-black/78 to-black/55" />
+      </div>
+      <div className="relative z-10 container-padding mx-auto pt-16 pb-0 md:pt-24 lg:pt-32">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3 lg:grid-cols-4">
           <div className="space-y-4">
-            <h3 className="text-xl font-display font-bold text-[hsl(var(--text-primary))]">
+            <h3 className="text-xl font-display font-bold text-white">
               ChiliRig
             </h3>
-            <p className="text-sm text-[hsl(var(--text-secondary))]">
+            <p className="text-sm text-white/80">
               Blazing flavor, bottled for you. Crafted with real ingredients,
               slow-infused for depth. Heat with bite. Flavor without limits.
             </p>
@@ -92,7 +103,7 @@ export function Footer() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Facebook"
-                className="text-[hsl(var(--text-secondary))] transition-colors hover:text-[hsl(var(--primary))]"
+                className="text-white/75 transition-colors hover:text-white"
               >
                 <FacebookIcon className={iconClass} />
               </a>
@@ -101,7 +112,7 @@ export function Footer() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Instagram"
-                className="text-[hsl(var(--text-secondary))] transition-colors hover:text-[hsl(var(--primary))]"
+                className="text-white/75 transition-colors hover:text-white"
               >
                 <InstagramIcon className={iconClass} />
               </a>
@@ -110,7 +121,7 @@ export function Footer() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Messenger"
-                className="text-[hsl(var(--text-secondary))] transition-colors hover:text-[hsl(var(--primary))]"
+                className="text-white/75 transition-colors hover:text-white"
               >
                 <MessengerIcon className={iconClass} />
               </a>
@@ -119,21 +130,21 @@ export function Footer() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="WhatsApp"
-                className="text-[hsl(var(--text-secondary))] transition-colors hover:text-[hsl(var(--primary))]"
+                className="text-white/75 transition-colors hover:text-white"
               >
                 <WhatsAppIcon className={iconClass} />
               </a>
               <a
                 href="#"
                 aria-label="YouTube"
-                className="text-[hsl(var(--text-secondary))] transition-colors hover:text-[hsl(var(--primary))]"
+                className="text-white/75 transition-colors hover:text-white"
               >
                 <YoutubeIcon className={iconClass} />
               </a>
               <a
                 href="mailto:hello@chilirig.com"
                 aria-label="Email"
-                className="text-[hsl(var(--text-secondary))] transition-colors hover:text-[hsl(var(--primary))]"
+                className="text-white/75 transition-colors hover:text-white"
               >
                 <MailIcon className={iconClass} />
               </a>
@@ -141,12 +152,12 @@ export function Footer() {
           </div>
 
           <div className="space-y-4">
-            <h4 className="text-sm font-semibold text-[hsl(var(--text-primary))]">Pages</h4>
-            <ul className="space-y-2 text-sm text-[hsl(var(--text-secondary))]">
+            <h4 className="text-sm font-semibold text-white">Pages</h4>
+            <ul className="space-y-2 text-sm text-white/80">
               <li>
                 <Link
                   href="/"
-                  className="transition-colors hover:text-[hsl(var(--primary))]"
+                  className="transition-colors hover:text-white"
                 >
                   Home
                 </Link>
@@ -154,7 +165,7 @@ export function Footer() {
               <li>
                 <Link
                   href="/shop"
-                  className="transition-colors hover:text-[hsl(var(--primary))]"
+                  className="transition-colors hover:text-white"
                 >
                   Shop
                 </Link>
@@ -162,7 +173,7 @@ export function Footer() {
               <li>
                 <Link
                   href="/story"
-                  className="transition-colors hover:text-[hsl(var(--primary))]"
+                  className="transition-colors hover:text-white"
                 >
                   Story
                 </Link>
@@ -170,7 +181,7 @@ export function Footer() {
               <li>
                 <Link
                   href="/recipes"
-                  className="transition-colors hover:text-[hsl(var(--primary))]"
+                  className="transition-colors hover:text-white"
                 >
                   Recipes
                 </Link>
@@ -178,7 +189,7 @@ export function Footer() {
               <li>
                 <Link
                   href="/faq"
-                  className="transition-colors hover:text-[hsl(var(--primary))]"
+                  className="transition-colors hover:text-white"
                 >
                   FAQ
                 </Link>
@@ -187,12 +198,12 @@ export function Footer() {
           </div>
 
           <div className="space-y-4">
-            <h4 className="text-sm font-semibold text-[hsl(var(--text-primary))]">Support</h4>
-            <ul className="space-y-2 text-sm text-[hsl(var(--text-secondary))]">
+            <h4 className="text-sm font-semibold text-white">Support</h4>
+            <ul className="space-y-2 text-sm text-white/80">
               <li>
                 <Link
                   href="/faq"
-                  className="transition-colors hover:text-[hsl(var(--primary))]"
+                  className="transition-colors hover:text-white"
                 >
                   Shipping Info
                 </Link>
@@ -200,7 +211,7 @@ export function Footer() {
               <li>
                 <Link
                   href="/faq"
-                  className="transition-colors hover:text-[hsl(var(--primary))]"
+                  className="transition-colors hover:text-white"
                 >
                   Returns
                 </Link>
@@ -208,7 +219,7 @@ export function Footer() {
               <li>
                 <Link
                   href="/faq"
-                  className="transition-colors hover:text-[hsl(var(--primary))]"
+                  className="transition-colors hover:text-white"
                 >
                   Heat Levels
                 </Link>
@@ -216,7 +227,7 @@ export function Footer() {
               <li>
                 <a
                   href="mailto:hello@chilirig.com"
-                  className="transition-colors hover:text-[hsl(var(--primary))]"
+                  className="transition-colors hover:text-white"
                 >
                   Contact Us
                 </a>
@@ -225,12 +236,12 @@ export function Footer() {
           </div>
 
           <div className="space-y-4">
-            <h4 className="text-sm font-semibold text-[hsl(var(--text-primary))]">Contact</h4>
-            <ul className="space-y-2 text-sm text-[hsl(var(--text-secondary))]">
+            <h4 className="text-sm font-semibold text-white">Contact</h4>
+            <ul className="space-y-2 text-sm text-white/80">
               <li>
                 <a
                   href="mailto:hello@chilirig.com"
-                  className="transition-colors hover:text-[hsl(var(--primary))]"
+                  className="transition-colors hover:text-white"
                 >
                   hello@chilirig.com
                 </a>
@@ -238,7 +249,7 @@ export function Footer() {
               <li>
                 <a
                   href="tel:01781366893"
-                  className="transition-colors hover:text-[hsl(var(--primary))]"
+                  className="transition-colors hover:text-white"
                 >
                   01781-366893
                 </a>
@@ -248,7 +259,7 @@ export function Footer() {
                   href="https://www.facebook.com/messages/t/61572618660966"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="transition-colors hover:text-[hsl(var(--primary))]"
+                  className="transition-colors hover:text-white"
                 >
                   Messenger
                 </a>
@@ -258,7 +269,7 @@ export function Footer() {
                   href="https://wa.me/8801781366893"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="transition-colors hover:text-[hsl(var(--primary))]"
+                  className="transition-colors hover:text-white"
                 >
                   WhatsApp
                 </a>
@@ -267,7 +278,7 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-12 border-t border-black/10 pt-8 text-center text-sm text-[hsl(var(--text-muted))]">
+        <div className="mt-12 border-t border-white/15 pb-4 pt-8 text-center text-sm text-white/50">
           <p>© {currentYear} ChiliRig. All rights reserved.</p>
         </div>
       </div>

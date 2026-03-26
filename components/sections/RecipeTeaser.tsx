@@ -2,14 +2,33 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { SectionContainer } from "@/components/SectionContainer";
-import { recipes } from "@/data/recipes";
-
-const featuredRecipes = recipes.slice(0, 3);
+import { Recipe } from "@/data/recipes";
+import { getCachedApiJson } from "@/lib/api-cache";
 
 export function RecipeTeaser() {
+  const [featuredRecipes, setFeaturedRecipes] = useState<Recipe[]>([]);
+
+  useEffect(() => {
+    const loadRecipes = async () => {
+      try {
+        const result = await getCachedApiJson<{ success: boolean; data?: Recipe[] }>(
+          "/api/recipes",
+          { ttlMs: 10 * 60 * 1000 }
+        );
+        if (result.success) {
+          setFeaturedRecipes((result.data ?? []).slice(0, 3));
+        }
+      } catch (error) {
+        console.error("Failed to fetch recipes:", error);
+      }
+    };
+    loadRecipes();
+  }, []);
+
   return (
     <SectionContainer>
       <div className="mb-12 text-center">

@@ -15,7 +15,7 @@ export function FeaturedBanner() {
           whileInView={{ opacity: 1, x: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="space-y-6"
+          className="space-y-6 lg:pr-6"
         >
           <h2 className="font-display text-3xl font-bold text-[hsl(var(--text-primary))] sm:text-4xl lg:text-5xl">
             Grow your cravings. Feed your fire.
@@ -32,7 +32,7 @@ export function FeaturedBanner() {
             noodles, or dipping your favorite snacks, ChiliRig elevates every
             bite.
           </p>
-          <Link href="/story">
+          <Link href="/story" className="inline-block pt-2">
             <Button size="lg" variant="default">
               Read Our Story
             </Button>
@@ -43,7 +43,7 @@ export function FeaturedBanner() {
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="relative aspect-square max-w-lg mx-auto lg:mx-0"
+          className="relative mx-auto aspect-[4/3] w-full max-w-md lg:mx-0 lg:max-w-lg"
         >
           <div className="relative h-full w-full rounded-2xl overflow-hidden bg-gray-100 border border-black/10 shadow-2xl">
             <Image

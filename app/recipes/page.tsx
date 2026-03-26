@@ -1,12 +1,35 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { SectionContainer } from "@/components/SectionContainer";
 import { Card, CardContent } from "@/components/ui/card";
-import { recipes } from "@/data/recipes";
+import { Recipe } from "@/data/recipes";
+import { getCachedApiJson } from "@/lib/api-cache";
 
 export default function RecipesPage() {
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
+
+  useEffect(() => {
+    const loadRecipes = async () => {
+      try {
+        const result = await getCachedApiJson<{ success: boolean; data?: Recipe[] }>(
+          "/api/recipes",
+          { ttlMs: 10 * 60 * 1000 }
+        );
+        if (result.success) {
+          setRecipes(result.data ?? []);
+        }
+      } catch (error) {
+        console.error("Failed to fetch recipes:", error);
+      }
+    };
+    loadRecipes();
+  }, []);
+
   return (
     <>
       <Header />

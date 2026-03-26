@@ -1,14 +1,39 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useEffect, useMemo, useState } from "react";
 import { Star } from "lucide-react";
 import { ReviewCard } from "@/components/ReviewCard";
 import { SectionContainer } from "@/components/SectionContainer";
-import { getAverageRating, getFeaturedReviews } from "@/data/reviews";
+import { Review } from "@/data/reviews";
+import { getCachedApiJson } from "@/lib/api-cache";
 
 export function SocialProof() {
-  const averageRating = getAverageRating();
-  const featuredReviews = getFeaturedReviews(3);
+  const [reviews, setReviews] = useState<Review[]>([]);
+
+  useEffect(() => {
+    const loadReviews = async () => {
+      try {
+        const result = await getCachedApiJson<{ success: boolean; data?: Review[] }>(
+          "/api/reviews",
+          { ttlMs: 10 * 60 * 1000 }
+        );
+        if (result.success) {
+          setReviews(result.data ?? []);
+        }
+      } catch (error) {
+        console.error("Failed to fetch reviews:", error);
+      }
+    };
+    loadReviews();
+  }, []);
+
+  const featuredReviews = useMemo(() => reviews.slice(0, 3), [reviews]);
+  const averageRating = useMemo(() => {
+    if (reviews.length === 0) return 0;
+    const total = reviews.reduce((sum, review) => sum + review.rating, 0);
+    return total / reviews.length;
+  }, [reviews]);
 
   return (
     <SectionContainer background="light">

@@ -1,8 +1,8 @@
 "use client";
 
-import { notFound } from "next/navigation";
+import { notFound, useParams } from "next/navigation";
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { SectionContainer } from "@/components/SectionContainer";
@@ -16,26 +16,65 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { ProductCard } from "@/components/ProductCard";
-import { getProductBySlug, products } from "@/data/products";
+import { Product } from "@/data/products";
 import { formatPrice } from "@/lib/utils";
 import { useCart } from "@/lib/store";
 import { ShoppingCart, Minus, Plus } from "lucide-react";
-
-interface ProductPageProps {
-  params: {
-    slug: string;
-  };
-}
-
-export default function ProductPage({ params }: ProductPageProps) {
-  const product = getProductBySlug(params.slug);
+import { getCachedApiJson } from "@/lib/api-cache";
+export default function ProductPage() {
+  const params = useParams<{ slug: string }>();
+  const slug = params?.slug;
+  const [product, setProduct] = useState<Product | null>(null);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [addingToCart, setAddingToCart] = useState(false);
   const addItem = useCart((state) => state.addItem);
 
-  if (!product) {
+  useEffect(() => {
+    const loadProducts = async () => {
+      try {
+        const [single, all] = await Promise.all([
+          getCachedApiJson<{ success: boolean; data?: Product }>(
+            `/api/products?slug=${encodeURIComponent(slug || "")}`,
+            { ttlMs: 10 * 60 * 1000, cacheKey: `/api/products?slug=${slug}` }
+          ),
+          getCachedApiJson<{ success: boolean; data?: Product[] }>("/api/products", {
+            ttlMs: 10 * 60 * 1000,
+          }),
+        ]);
+        if (single.success && single.data) {
+          setProduct(single.data);
+        }
+        if (all.success) {
+          setProducts(all.data ?? []);
+        }
+      } catch (error) {
+        console.error("Failed to fetch products:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (slug) loadProducts();
+  }, [slug]);
+
+  if (!loading && !product) {
     notFound();
+  }
+
+  if (!product) {
+    return (
+      <>
+        <Header />
+        <main>
+          <SectionContainer>
+            <p className="text-gray-600">Loading product...</p>
+          </SectionContainer>
+        </main>
+        <Footer />
+      </>
+    );
   }
 
   const handleAddToCart = async () => {
@@ -61,11 +100,11 @@ export default function ProductPage({ params }: ProductPageProps) {
   return (
     <>
       <Header />
-      <main>
+      <main className="pt-2">
         <SectionContainer>
           <div className="grid gap-8 lg:grid-cols-2">
             {/* Image Gallery */}
-            <div className="space-y-4">
+            <div className="mx-auto w-[70%] space-y-4 lg:mx-0">
               <div className="relative aspect-square overflow-hidden rounded-2xl bg-gray-100 border border-gray-200">
                 <Image
                   src={product.images[selectedImageIndex] || product.image}
@@ -102,25 +141,25 @@ export default function ProductPage({ params }: ProductPageProps) {
             </div>
 
             {/* Product Info */}
-            <div className="space-y-6">
+            <div className="space-y-5 sm:space-y-6">
               <div>
-                <h1 className="mb-4 font-display text-4xl font-bold text-gray-900 sm:text-5xl">
+                <h1 className="mb-3 font-display text-2xl font-bold leading-tight text-gray-900 sm:mb-4 sm:text-4xl lg:text-5xl">
                   {product.name}
                 </h1>
-                <div className="mb-4 flex items-center gap-4">
-                  <span className="text-3xl font-bold text-gray-900">
+                <div className="mb-3 flex items-center gap-3 sm:mb-4 sm:gap-4">
+                  <span className="text-2xl font-bold text-gray-900 sm:text-3xl">
                     {formatPrice(product.price)}
                   </span>
                   {product.originalPrice && (
-                    <span className="text-lg text-gray-500 line-through">
+                    <span className="text-base text-gray-500 line-through sm:text-lg">
                       {formatPrice(product.originalPrice)}
                     </span>
                   )}
                 </div>
-                <div className="mb-6">
+                <div className="mb-4 sm:mb-6">
                   <HeatMeter level={product.heatLevel} size="lg" />
                 </div>
-                <p className="text-lg text-gray-600">
+                <p className="text-base leading-relaxed text-gray-600 sm:text-lg">
                   {product.description}
                 </p>
               </div>
@@ -142,7 +181,7 @@ export default function ProductPage({ params }: ProductPageProps) {
               )}
 
               {/* Quantity & Add to Cart */}
-              <div className="space-y-4 border-t border-border pt-6">
+              <div className="space-y-4 border-t border-border pt-5 sm:pt-6">
                 <div className="flex items-center gap-4">
                   <label className="text-sm font-semibold text-gray-900">
                     Quantity:
@@ -169,11 +208,11 @@ export default function ProductPage({ params }: ProductPageProps) {
                     </Button>
                   </div>
                 </div>
-                <div className="flex gap-4">
+                <div className="flex gap-3 sm:gap-4">
                   <Button
                     size="lg"
                     onClick={handleAddToCart}
-                    className="flex-1"
+                    className="h-11 flex-1 text-sm sm:h-12 sm:text-base"
                     disabled={addingToCart || !product.inStock}
                   >
                     {addingToCart ? (
@@ -188,7 +227,7 @@ export default function ProductPage({ params }: ProductPageProps) {
                   <Button
                     variant="secondary"
                     size="lg"
-                    className="flex-1"
+                    className="h-11 flex-1 text-sm sm:h-12 sm:text-base"
                     disabled={addingToCart || !product.inStock}
                     onClick={async () => {
                       await handleAddToCart();
@@ -244,15 +283,6 @@ export default function ProductPage({ params }: ProductPageProps) {
                     </AccordionContent>
                   </AccordionItem>
                 )}
-                <AccordionItem value="shipping">
-                  <AccordionTrigger value="shipping">Shipping</AccordionTrigger>
-                  <AccordionContent value="shipping">
-                    <p className="text-sm text-muted-foreground">
-                      Free shipping on orders over ৳5,000. Ships within 24 hours.
-                      Estimated delivery: 3-5 business days.
-                    </p>
-                  </AccordionContent>
-                </AccordionItem>
                 <AccordionItem value="storage">
                   <AccordionTrigger value="storage">Storage</AccordionTrigger>
                   <AccordionContent value="storage">
@@ -269,10 +299,10 @@ export default function ProductPage({ params }: ProductPageProps) {
           {/* Related Products */}
           {relatedProducts.length > 0 && (
             <div className="mt-16">
-                <h2 className="mb-8 font-display text-3xl font-bold text-gray-900">
+                <h2 className="mb-6 font-display text-2xl font-bold text-gray-900 sm:mb-8 sm:text-3xl">
                 Pairs well with
               </h2>
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid grid-cols-2 items-stretch gap-3 [&>*]:min-h-0 [&>*]:h-full [&>*]:min-w-0 sm:gap-6 lg:grid-cols-3">
                 {relatedProducts.map((relatedProduct) => (
                   <ProductCard
                     key={relatedProduct.id}

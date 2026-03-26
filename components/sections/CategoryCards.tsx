@@ -30,55 +30,73 @@ const categories = [
 
 export function CategoryCards() {
   return (
-    <SectionContainer background="theme">
-      <div className="mb-12 text-center">
-        <h2 className="mb-4 font-display text-3xl font-bold text-white sm:text-4xl">
-          Explore Our Collection
-        </h2>
-        <p className="text-white/90">
-          Find your perfect heat level and flavor profile
-        </p>
+    <SectionContainer background="theme" className="relative overflow-hidden bg-black">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0"
+      >
+        <Image
+          src="/images/hero/fire-flames-on-black-background-free-photo.jpg"
+          alt=""
+          fill
+          priority
+          className="object-cover object-bottom"
+          sizes="100vw"
+        />
+        <div className="absolute inset-0 bg-black/55" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.08),transparent_35%),radial-gradient(circle_at_80%_70%,rgba(239,68,68,0.12),transparent_40%)]" />
       </div>
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {categories.map((category, index) => (
-          <motion.div
-            key={category.title}
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.4, delay: index * 0.1 }}
-            className="h-full"
-          >
-            <Card className="group h-full flex flex-col overflow-hidden transition-all hover:shadow-xl hover:shadow-black/20 border-white/20 bg-white/10 backdrop-blur-sm hover:bg-white/15">
-              <Link href={category.href}>
-                <div className="relative h-64 overflow-hidden bg-gray-100 border-b border-white/20 flex-shrink-0">
-                  <Image
-                    src={category.image}
-                    alt={category.title}
-                    fill
-                    className="object-cover transition-transform duration-300 group-hover:scale-110"
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                  />
-                </div>
-              </Link>
-              <CardContent className="p-6 flex flex-col flex-grow">
-                <h3 className="mb-2 font-display text-xl font-semibold text-white">
-                  {category.title}
-                </h3>
-                <p className="mb-4 text-sm text-white/80 flex-grow min-h-[2.5rem]">
-                  {category.description}
-                </p>
-                <Link href={category.href} className="mt-auto">
-                  <Button 
-                    className="w-full bg-white text-[hsl(var(--primary))] hover:bg-white/90 border-0 shadow-lg hover:shadow-xl"
-                  >
-                    Shop {category.title}
-                  </Button>
+
+      <div className="relative z-10">
+        <div className="mb-12 text-center">
+          <h2 className="mb-4 font-display text-3xl font-bold text-white sm:text-4xl">
+            Explore Our Collection
+          </h2>
+          <p className="text-white/90">
+            Find your perfect heat level and flavor profile
+          </p>
+        </div>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {categories.map((category, index) => (
+            <motion.div
+              key={category.title}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4, delay: index * 0.1 }}
+              className="h-full"
+            >
+              <Card className="group h-full flex flex-col overflow-hidden border border-white/35 bg-white/12 backdrop-blur-xl transition-all hover:bg-white/18 hover:shadow-xl hover:shadow-black/30">
+                <Link href={category.href}>
+                <div className="relative h-64 flex-shrink-0 overflow-hidden border-b border-white/25 bg-black/20">
+                    <Image
+                      src={category.image}
+                      alt={category.title}
+                      fill
+                      className="object-cover transition-transform duration-300 group-hover:scale-110"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    />
+                  </div>
                 </Link>
-              </CardContent>
-            </Card>
-          </motion.div>
-        ))}
+                <CardContent className="p-6 flex flex-col flex-grow">
+                  <h3 className="mb-2 font-display text-xl font-semibold text-white">
+                    {category.title}
+                  </h3>
+                  <p className="mb-4 min-h-[2.5rem] flex-grow text-sm text-white/85">
+                    {category.description}
+                  </p>
+                  <Link href={category.href} className="mt-auto">
+                    <Button
+                      className="w-full border-0 bg-[hsl(var(--primary))] text-white shadow-lg hover:bg-[hsl(var(--primary-hover))] hover:shadow-xl"
+                    >
+                      Shop {category.title}
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
+        </div>
       </div>
     </SectionContainer>
   );

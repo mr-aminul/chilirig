@@ -10,11 +10,13 @@ import { RecipeTeaser } from "@/components/sections/RecipeTeaser";
 import { SocialProof } from "@/components/sections/SocialProof";
 import { InstagramGallery } from "@/components/sections/InstagramGallery";
 import { Newsletter } from "@/components/sections/Newsletter";
+import { HomePrefetch } from "@/components/HomePrefetch";
 
 export default function Home() {
   return (
     <>
       <Header />
+      <HomePrefetch />
       <main>
         <Hero />
         <ValueProps />

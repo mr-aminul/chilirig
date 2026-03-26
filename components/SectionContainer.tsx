@@ -4,12 +4,15 @@ interface SectionContainerProps {
   children: React.ReactNode;
   background?: "default" | "light" | "dark" | "theme";
   className?: string;
+  /** Merged with inner wrapper (e.g. override max width: `max-w-[80vw]`). */
+  innerClassName?: string;
 }
 
 export function SectionContainer({
   children,
   background = "default",
   className,
+  innerClassName,
 }: SectionContainerProps) {
   const backgroundClasses = {
     default: "bg-[hsl(var(--bg-primary))]",
@@ -27,7 +30,14 @@ export function SectionContainer({
         className
       )}
     >
-      <div className="container-padding mx-auto max-w-7xl">{children}</div>
+      <div
+        className={cn(
+          "container-padding mx-auto max-w-7xl",
+          innerClassName
+        )}
+      >
+        {children}
+      </div>
     </section>
   );
 }

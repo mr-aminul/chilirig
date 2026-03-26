@@ -6,11 +6,14 @@ import { useCart, useOrders } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
+import { getCachedApiJson } from "@/lib/api-cache";
 
 const INACTIVITY_MS = 3000;
 const IDLE_CHECK_INTERVAL_MS = 500;
 
 export function Header() {
+  const router = useRouter();
   const itemCount = useCart((state) => state.getItemCount());
   const lastAddedAt = useCart((state) => state.lastAddedAt);
   const clearJustAdded = useCart((state) => state.clearJustAdded);
@@ -64,21 +67,68 @@ export function Header() {
     ...(mounted && orderCount > 0 ? [{ href: "/orders", label: "Your Orders" }] : []),
   ];
 
+  const prefetchRoute = (href: string) => {
+    router.prefetch(href);
+  };
+
+  const goTo = (
+    e: React.MouseEvent<HTMLElement> | React.TouchEvent<HTMLElement>,
+    href: string
+  ) => {
+    e.preventDefault();
+    router.push(href);
+  };
+
+  useEffect(() => {
+    const runWarmup = async () => {
+      try {
+        // Route bundle prefetch
+        router.prefetch("/");
+        router.prefetch("/shop");
+        router.prefetch("/recipes");
+        router.prefetch("/story");
+        router.prefetch("/faq");
+
+        // Warm data for major public pages
+        await Promise.allSettled([
+          getCachedApiJson("/api/products", { ttlMs: 10 * 60 * 1000 }),
+          getCachedApiJson("/api/recipes", { ttlMs: 10 * 60 * 1000 }),
+          getCachedApiJson("/api/story", { ttlMs: 10 * 60 * 1000 }),
+          getCachedApiJson("/api/faq", { ttlMs: 10 * 60 * 1000 }),
+          getCachedApiJson("/api/reviews", { ttlMs: 10 * 60 * 1000 }),
+        ]);
+      } catch {
+        // best-effort optimization only
+      }
+    };
+
+    const timer = window.setTimeout(runWarmup, 200);
+    return () => window.clearTimeout(timer);
+  }, [router]);
+
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 pt-4 px-4 sm:px-6 lg:px-8">
-      <div className="mx-auto w-full sm:w-3/4 md:w-2/3 lg:w-1/2 flex justify-center relative">
-        <nav className={`relative rounded-full bg-white/20 backdrop-blur-2xl shadow-lg shadow-black/5 px-3 sm:px-6 py-2 w-full ${mobileMenuOpen ? '' : 'overflow-hidden'}`}>
-          {/* Seamless glass gradient - single smooth layer */}
+    <header className="fixed top-0 left-0 right-0 z-50 px-3 pt-0 sm:px-6 sm:pt-4 lg:px-8">
+      <div className="relative mx-auto flex w-full justify-center sm:w-3/4 md:w-2/3 lg:w-1/2">
+        <nav
+          className={`relative w-full rounded-full bg-white/20 px-3 py-1.5 shadow-lg shadow-black/5 backdrop-blur-2xl sm:px-6 sm:py-2 ${mobileMenuOpen ? "" : "overflow-hidden"}`}
+        >
           <div className="absolute inset-0 rounded-full bg-gradient-to-b from-white/30 via-white/10 to-transparent pointer-events-none" />
-          
           <div className="relative flex items-center justify-between gap-2">
             {/* Logo */}
-            <Link href="/" className="flex items-center space-x-2 z-10 group flex-shrink-0">
+            <Link
+              href="/"
+              prefetch
+              onMouseEnter={() => prefetchRoute("/")}
+              onFocus={() => prefetchRoute("/")}
+              onTouchStart={() => prefetchRoute("/")}
+              onClick={(e) => goTo(e, "/")}
+              className="flex items-center space-x-2 z-10 group flex-shrink-0"
+            >
               <div className="flex items-center space-x-2">
                 <div className="w-6 h-6 rounded bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(var(--primary-hover))] flex items-center justify-center">
                   <span className="text-white text-xs font-bold">C</span>
                 </div>
-                <span className="text-black font-semibold text-base sm:text-lg tracking-tight">ChiliRig</span>
+                <span className="text-sm font-semibold tracking-tight text-black sm:text-lg">ChiliRig</span>
               </div>
             </Link>
 
@@ -88,7 +138,12 @@ export function Header() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="px-4 py-2 text-sm font-medium text-black transition-all duration-200 rounded-full hover:bg-black/10"
+                  prefetch
+                  onMouseEnter={() => prefetchRoute(link.href)}
+                  onFocus={() => prefetchRoute(link.href)}
+                  onTouchStart={() => prefetchRoute(link.href)}
+                  onClick={(e) => goTo(e, link.href)}
+                  className="rounded-full px-4 py-2 text-sm font-medium text-black transition-all duration-200 hover:bg-black/10"
                 >
                   {link.label}
                 </Link>
@@ -97,7 +152,14 @@ export function Header() {
 
             {/* Right side actions */}
             <div className="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
-              <Link href="/shop">
+              <Link
+                href="/shop"
+                prefetch
+                onMouseEnter={() => prefetchRoute("/shop")}
+                onFocus={() => prefetchRoute("/shop")}
+                onTouchStart={() => prefetchRoute("/shop")}
+                onClick={(e) => goTo(e, "/shop")}
+              >
                 <Button 
                   size="sm" 
                   variant="default"
@@ -116,9 +178,9 @@ export function Header() {
                 aria-label="Menu"
               >
                 {mobileMenuOpen ? (
-                  <X className="h-5 w-5 text-black" />
+                  <X className="h-4 w-4 text-black sm:h-5 sm:w-5" />
                 ) : (
-                  <Menu className="h-5 w-5 text-black" />
+                  <Menu className="h-4 w-4 text-black sm:h-5 sm:w-5" />
                 )}
               </Button>
             </div>
@@ -134,15 +196,29 @@ export function Header() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="px-4 py-2 text-sm font-medium text-black transition-all duration-200 rounded-lg hover:bg-black/10"
-                  onClick={() => setMobileMenuOpen(false)}
+                  prefetch
+                  onMouseEnter={() => prefetchRoute(link.href)}
+                  onFocus={() => prefetchRoute(link.href)}
+                  onTouchStart={() => prefetchRoute(link.href)}
+                  onClick={(e) => {
+                    goTo(e, link.href);
+                    setMobileMenuOpen(false);
+                  }}
+                  className="rounded-lg px-4 py-2 text-sm font-medium text-black transition-all duration-200 hover:bg-black/10"
                 >
                   {link.label}
                 </Link>
               ))}
               <Link 
-                href="/shop" 
-                onClick={() => setMobileMenuOpen(false)}
+                href="/shop"
+                prefetch
+                onMouseEnter={() => prefetchRoute("/shop")}
+                onFocus={() => prefetchRoute("/shop")}
+                onTouchStart={() => prefetchRoute("/shop")}
+                onClick={(e) => {
+                  goTo(e, "/shop");
+                  setMobileMenuOpen(false);
+                }}
                 className="mt-2"
               >
                 <Button 

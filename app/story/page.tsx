@@ -1,11 +1,18 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { SectionContainer } from "@/components/SectionContainer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { storyContent, StorySection } from "@/data/story";
+import { StoryContent, StorySection } from "@/data/story";
+import { getCachedApiJson } from "@/lib/api-cache";
+import { Leaf, Package, Timer, type LucideIcon } from "lucide-react";
+
+const PROMISE_ICONS: LucideIcon[] = [Leaf, Timer, Package];
 
 function renderSection(section: StorySection) {
   switch (section.type) {
@@ -13,7 +20,7 @@ function renderSection(section: StorySection) {
       return (
         <div key={section.id} className="mb-16 grid gap-12 lg:grid-cols-2 lg:items-center">
           <div
-            className={`relative aspect-square overflow-hidden rounded-2xl bg-gray-100 border border-border ${
+            className={`relative mx-auto aspect-[4/3] w-full max-w-md overflow-hidden rounded-2xl border border-border bg-gray-100 lg:mx-0 lg:max-w-lg ${
               section.imagePosition === "right" ? "order-2" : ""
             }`}
           >
@@ -27,7 +34,11 @@ function renderSection(section: StorySection) {
               />
             )}
           </div>
-          <div className="space-y-6">
+          <div
+            className={`space-y-6 ${
+              section.imagePosition === "right" ? "lg:pr-6" : "lg:pl-6"
+            }`}
+          >
             {section.title && (
               <h2 className="font-display text-3xl font-bold text-[hsl(var(--text-primary))] sm:text-4xl">
                 {section.title}
@@ -53,21 +64,31 @@ function renderSection(section: StorySection) {
           )}
           {section.promises && section.promises.length > 0 && (
             <div className="grid gap-6 md:grid-cols-3">
-              {section.promises.map((promise) => (
-                <Card
-                  key={promise.id}
-                  className="group h-full cursor-pointer transition-all duration-300 border-black/10 bg-white/80 hover:!bg-[hsl(var(--primary))] hover:!border-[hsl(var(--primary))] hover:!shadow-[hsl(var(--primary))]/20"
-                >
-                  <CardContent className="p-6">
-                    <h3 className="mb-3 font-display text-xl font-semibold text-[hsl(var(--text-primary))] transition-colors duration-300 group-hover:!text-white">
-                      {promise.title}
-                    </h3>
-                    <p className="text-sm text-[hsl(var(--text-secondary))] transition-colors duration-300 group-hover:!text-white/90">
-                      {promise.description}
-                    </p>
-                  </CardContent>
-                </Card>
-              ))}
+              {section.promises.map((promise, index) => {
+                const Icon = PROMISE_ICONS[index % PROMISE_ICONS.length];
+                return (
+                  <Card
+                    key={promise.id}
+                    className="group h-full cursor-pointer transition-all duration-300 border-black/10 bg-white/80 hover:!bg-[hsl(var(--primary))] hover:!border-[hsl(var(--primary))] hover:!shadow-[hsl(var(--primary))]/20"
+                  >
+                    <CardContent className="p-6">
+                      <div className="flex gap-3">
+                        <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary transition-colors duration-300 group-hover:bg-white/15 group-hover:text-white">
+                          <Icon className="h-3.5 w-3.5" aria-hidden />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h3 className="mb-2 font-display text-lg font-semibold leading-snug text-[hsl(var(--text-primary))] transition-colors duration-300 group-hover:!text-white sm:text-xl">
+                            {promise.title}
+                          </h3>
+                          <p className="text-sm leading-relaxed text-[hsl(var(--text-secondary))] transition-colors duration-300 group-hover:!text-white/90">
+                            {promise.description}
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           )}
         </div>
@@ -77,7 +98,7 @@ function renderSection(section: StorySection) {
       return (
         <div key={section.id} className="mb-16 grid gap-12 lg:grid-cols-2 lg:items-center">
           <div
-            className={`space-y-6 ${section.imagePosition === "right" ? "order-2 lg:order-1" : "order-2 lg:order-1"}`}
+            className={`space-y-6 lg:pr-6 ${section.imagePosition === "right" ? "order-2 lg:order-1" : "order-2 lg:order-1"}`}
           >
             {section.title && (
               <h2 className="font-display text-3xl font-bold text-[hsl(var(--text-primary))] sm:text-4xl">
@@ -91,14 +112,14 @@ function renderSection(section: StorySection) {
                 </p>
               ))}
             {section.ctaText && section.ctaLink && (
-              <Link href={section.ctaLink}>
+              <Link href={section.ctaLink} className="inline-block pt-2">
                 <Button size="lg">{section.ctaText}</Button>
               </Link>
             )}
           </div>
           {section.image && (
             <div
-              className={`relative aspect-square overflow-hidden rounded-2xl bg-gray-100 border border-border ${
+              className={`relative mx-auto aspect-[4/3] w-full max-w-md overflow-hidden rounded-2xl border border-border bg-gray-100 lg:mx-0 lg:max-w-lg ${
                 section.imagePosition === "right" ? "order-1 lg:order-2" : "order-1 lg:order-2"
               }`}
             >
@@ -131,7 +152,39 @@ function renderSection(section: StorySection) {
 }
 
 export default function StoryPage() {
-  const story = storyContent;
+  const [story, setStory] = useState<StoryContent | null>(null);
+
+  useEffect(() => {
+    const loadStory = async () => {
+      try {
+        const result = await getCachedApiJson<{ success: boolean; data?: StoryContent }>(
+          "/api/story",
+          { ttlMs: 10 * 60 * 1000 }
+        );
+        if (result.success) {
+          setStory(result.data ?? null);
+        }
+      } catch (error) {
+        console.error("Failed to fetch story:", error);
+      }
+    };
+    loadStory();
+  }, []);
+
+  if (!story) {
+    return (
+      <>
+        <Header />
+        <main>
+          <SectionContainer>
+            <p className="text-[hsl(var(--text-secondary))]">Loading story...</p>
+          </SectionContainer>
+        </main>
+        <Footer />
+      </>
+    );
+  }
+
   const sortedSections = [...story.sections].sort((a, b) => a.order - b.order);
 
   return (

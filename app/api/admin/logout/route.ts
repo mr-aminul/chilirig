@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { ADMIN_AUTH_COOKIE_NAME } from "@/lib/auth";
 
 export async function POST() {
   try {
@@ -7,8 +8,7 @@ export async function POST() {
       message: "Logged out successfully",
     });
 
-    // Delete cookie
-    response.cookies.delete("admin-auth");
+    response.cookies.delete(ADMIN_AUTH_COOKIE_NAME);
 
     return response;
   } catch (error) {

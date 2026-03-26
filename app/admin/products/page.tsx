@@ -137,13 +137,17 @@ export default function ProductsPage() {
             {filteredProducts.map((product) => (
               <Card key={product.id} className="overflow-hidden">
                 <div className="relative h-48 bg-muted">
-                  {product.image && (
-                    <img
-                      src={product.image}
-                      alt={product.name}
-                      className="w-full h-full object-cover"
-                    />
-                  )}
+                  <img
+                    src={product.image || product.images?.[0] || "/api/placeholder/600/600"}
+                    alt={product.name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      const target = e.currentTarget;
+                      if (!target.src.includes("/api/placeholder/600/600")) {
+                        target.src = "/api/placeholder/600/600";
+                      }
+                    }}
+                  />
                   <div className="absolute top-2 right-2 flex gap-2">
                     <Button
                       size="icon"
