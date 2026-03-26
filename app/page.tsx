@@ -17,7 +17,7 @@ export default function Home() {
     <>
       <Header />
       <HomePrefetch />
-      <main>
+      <main className="home-sections">
         <Hero />
         <ValueProps />
         <CategoryCards />

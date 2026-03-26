@@ -6,7 +6,7 @@ import { useCart, useOrders } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { getCachedApiJson } from "@/lib/api-cache";
 
 const INACTIVITY_MS = 3000;
@@ -14,6 +14,7 @@ const IDLE_CHECK_INTERVAL_MS = 500;
 
 export function Header() {
   const router = useRouter();
+  const pathname = usePathname();
   const itemCount = useCart((state) => state.getItemCount());
   const lastAddedAt = useCart((state) => state.lastAddedAt);
   const clearJustAdded = useCart((state) => state.clearJustAdded);
@@ -235,7 +236,7 @@ export function Header() {
       </div>
 
       {/* Floating Cart Bubble - Only show after mount to avoid hydration mismatch with persisted cart */}
-      {mounted && itemCount > 0 && (
+      {mounted && itemCount > 0 && pathname !== "/checkout" && (
         <Link
           href="/checkout"
           className="fixed bottom-6 right-6 z-50 group"

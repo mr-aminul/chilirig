@@ -41,12 +41,12 @@ export function ProductGrid() {
   ];
 
   return (
-    <SectionContainer className="!py-6 md:!py-8 lg:!py-10">
-      <div className="mb-5 text-center md:mb-6">
-        <h2 className="mb-1.5 font-display text-2xl font-bold text-[hsl(var(--text-primary))] sm:mb-2 sm:text-3xl lg:text-3xl">
+    <SectionContainer className="!py-10 md:!py-14 lg:!py-16">
+      <div className="mb-12 text-center">
+        <h2 className="mb-4 font-display text-3xl font-bold text-[hsl(var(--text-primary))] sm:text-4xl">
           Our Products
         </h2>
-        <p className="text-sm text-[hsl(var(--text-secondary))] md:text-base">
+        <p className="text-[hsl(var(--text-secondary))]">
           Handcrafted with premium ingredients
         </p>
       </div>

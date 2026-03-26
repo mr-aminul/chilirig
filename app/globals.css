@@ -129,6 +129,14 @@
   .section-padding {
     @apply py-16 md:py-24 lg:py-32;
   }
+
+  .home-sections > .section-padding {
+    @apply py-10 md:py-14 lg:py-16;
+  }
+
+  .home-sections > .section-padding > .container-padding {
+    max-width: 80vw;
+  }
   
   .container-padding {
     @apply px-4 sm:px-6 lg:px-8;

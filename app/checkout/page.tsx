@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { SectionContainer } from "@/components/SectionContainer";
@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCart, useOrders } from "@/lib/store";
 import { formatPrice } from "@/lib/utils";
 import Image from "next/image";
-import { Minus, Plus, Trash2, Copy, Check, ExternalLink } from "lucide-react";
+import { Minus, Plus, Trash2, Copy, Check, ExternalLink, Banknote } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 
@@ -27,6 +27,22 @@ interface PathaoArea {
   area_name: string;
 }
 
+type CheckoutFieldKey =
+  | "cityId"
+  | "zoneId"
+  | "areaId"
+  | "address"
+  | "fullName"
+  | "email"
+  | "phone"
+  | "secondaryPhone";
+
+interface CheckoutErrorState {
+  title: string;
+  message: string;
+  field?: CheckoutFieldKey;
+}
+
 export default function CheckoutPage() {
   const { items, updateQuantity, removeItem, getTotal, clearCart } = useCart();
   const addOrder = useOrders((s) => s.addOrder);
@@ -36,7 +52,7 @@ export default function CheckoutPage() {
   const [orderPhone, setOrderPhone] = useState<string | null>(null);
   const [pathaoError, setPathaoError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<CheckoutErrorState | null>(null);
   const [formData, setFormData] = useState({
     email: "",
     fullName: "",
@@ -61,8 +77,99 @@ export default function CheckoutPage() {
   const [shippingPriceLoading, setShippingPriceLoading] = useState(false);
   const [shippingPriceError, setShippingPriceError] = useState<string | null>(null);
   const [copiedField, setCopiedField] = useState<"order" | "tracking" | null>(null);
+  const fieldRefs = useRef<
+    Partial<Record<CheckoutFieldKey, HTMLInputElement | HTMLSelectElement | null>>
+  >({});
 
   const cartWeightKg = Math.max(0.5, items.reduce((sum, i) => sum + i.quantity * 0.5, 0));
+
+  const formatFieldList = (fields: string[]) => {
+    if (fields.length <= 1) return fields[0] ?? "";
+    if (fields.length === 2) return `${fields[0]} and ${fields[1]}`;
+    return `${fields.slice(0, -1).join(", ")}, and ${fields[fields.length - 1]}`;
+  };
+
+  const getPhoneDigits = (value: string) => value.replace(/\D/g, "");
+
+  const focusField = useCallback(
+    (field: CheckoutFieldKey) => {
+      const runFocus = () => {
+        const el = fieldRefs.current[field];
+        if (!el) return;
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        window.setTimeout(() => el.focus(), 120);
+      };
+
+      if (field === "secondaryPhone" && !showSecondaryPhone) {
+        setShowSecondaryPhone(true);
+        window.setTimeout(runFocus, 50);
+        return;
+      }
+
+      runFocus();
+    },
+    [showSecondaryPhone]
+  );
+
+  const getCheckoutValidationError = () => {
+    const missingFields: Array<{ key: CheckoutFieldKey; label: string }> = [];
+
+    if (!formData.fullName.trim()) missingFields.push({ key: "fullName", label: "Full name" });
+    if (!formData.email.trim()) missingFields.push({ key: "email", label: "Email" });
+    if (!formData.phone.trim()) missingFields.push({ key: "phone", label: "Phone" });
+    if (!formData.address.trim()) {
+      missingFields.push({ key: "address", label: "Detailed address" });
+    }
+    if (!formData.cityId) missingFields.push({ key: "cityId", label: "City" });
+    if (!formData.zoneId) missingFields.push({ key: "zoneId", label: "Zone" });
+
+    if (missingFields.length > 0) {
+      return {
+        title: "Complete the missing fields",
+        message: `Please fill in ${formatFieldList(missingFields.map((field) => field.label))}. We’ve taken you to the first field that needs attention.`,
+        field: missingFields[0].key,
+      };
+    }
+
+    const email = formData.email.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return {
+        title: "Enter a valid email address",
+        message: "Please check the Email field and use a valid address like name@example.com. We’ve moved you to that field.",
+        field: "email" as const,
+      };
+    }
+
+    const phoneDigits = getPhoneDigits(formData.phone);
+    if (phoneDigits.length !== 11 || !phoneDigits.startsWith("01")) {
+      return {
+        title: "Check your phone number",
+        message: "Please enter an 11-digit Bangladeshi mobile number in the Phone field, for example 01712345678. We’ve taken you there now.",
+        field: "phone" as const,
+      };
+    }
+
+    if (showSecondaryPhone && formData.secondaryPhone.trim()) {
+      const secondaryPhoneDigits = getPhoneDigits(formData.secondaryPhone);
+      if (secondaryPhoneDigits.length !== 11 || !secondaryPhoneDigits.startsWith("01")) {
+        return {
+          title: "Check the secondary phone number",
+          message: "Please use an 11-digit Bangladeshi mobile number for the secondary phone, or remove that field if you do not need it. We’ve opened that field for you.",
+          field: "secondaryPhone" as const,
+        };
+      }
+    }
+
+    if (shippingPriceLoading) {
+      return {
+        title: "Shipping is still being calculated",
+        message: "Please wait a moment for the shipping cost to finish loading after selecting City and Zone, then place your order again.",
+        field: "zoneId" as const,
+      };
+    }
+
+    return null;
+  };
 
   useEffect(() => {
     fetch("/api/pathao/cities")
@@ -170,6 +277,16 @@ export default function CheckoutPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    const validationError = getCheckoutValidationError();
+    if (validationError) {
+      setError(validationError);
+      if (validationError.field) {
+        focusField(validationError.field);
+      }
+      return;
+    }
+
     setLoading(true);
 
     const subtotal = getTotal();
@@ -213,7 +330,12 @@ export default function CheckoutPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Failed to place order. Please try again.");
+        setError({
+          title: "We couldn't place your order",
+          message:
+            data.error ||
+            "Please review your delivery details, especially City, Zone, phone number, and address, then try again.",
+        });
         setLoading(false);
         return;
       }
@@ -233,7 +355,11 @@ export default function CheckoutPage() {
         itemsSummary: items.map((i) => `${i.name} × ${i.quantity}`).join(" | "),
       });
     } catch {
-      setError("Network error. Please check your connection and try again.");
+      setError({
+        title: "Connection problem",
+        message:
+          "Your order was not submitted. Please check your internet connection and try again. If the problem continues, refresh the page and resubmit.",
+      });
     } finally {
       setLoading(false);
     }
@@ -259,7 +385,7 @@ export default function CheckoutPage() {
               {/* Success hero - animated completed icon */}
               <div className="flex flex-col items-center text-center">
                 <motion.div
-                  className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-[hsl(var(--primary))] shadow-lg shadow-[hsl(var(--primary))]/30 ring-4 ring-[hsl(var(--primary))]/20"
+                  className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-[hsl(var(--primary))] shadow-lg shadow-[hsl(var(--primary))]/30 ring-4 ring-[hsl(var(--primary))]/20 sm:mb-6 sm:h-20 sm:w-20"
                   initial={{ scale: 0, opacity: 0 }}
                   animate={{
                     scale: [0, 1, 1],
@@ -290,13 +416,13 @@ export default function CheckoutPage() {
                     }}
                     className="flex items-center justify-center rounded-full"
                   >
-                    <Check className="h-10 w-10 text-white" strokeWidth={2.5} aria-hidden />
+                    <Check className="h-8 w-8 text-white sm:h-10 sm:w-10" strokeWidth={2.5} aria-hidden />
                   </motion.div>
                 </motion.div>
-                <h1 className="mb-3 font-display text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+                <h1 className="mb-3 font-display text-2xl font-bold tracking-tight text-gray-900 sm:text-4xl">
                   Order confirmed
                 </h1>
-                <p className="mb-8 max-w-md text-base text-gray-600">
+                <p className="mb-6 max-w-md text-sm text-gray-600 sm:mb-8 sm:text-base">
                   We&apos;ll get your order to you soon. Pay when it arrives—cash on delivery.
                 </p>
               </div>
@@ -403,10 +529,10 @@ export default function CheckoutPage() {
         <main>
           <SectionContainer>
             <div className="mx-auto max-w-2xl text-center">
-              <h1 className="mb-4 font-display text-4xl font-bold text-gray-900 sm:text-5xl">
+              <h1 className="mb-4 font-display text-3xl font-bold text-gray-900 sm:text-5xl">
                 Your cart is empty
               </h1>
-              <p className="mb-8 text-lg text-gray-600">
+              <p className="mb-8 text-base text-gray-600 sm:text-lg">
                 Add some spicy goodness to your cart!
               </p>
               <Link href="/shop">
@@ -425,28 +551,112 @@ export default function CheckoutPage() {
       <Header />
       <main>
         <SectionContainer>
-          <h1 className="mb-8 font-display text-4xl font-bold text-gray-900 sm:text-5xl">
+          <h1 className="mb-6 font-display text-3xl font-bold text-gray-900 sm:mb-8 sm:text-5xl">
             Checkout
           </h1>
-          <div className="grid gap-8 lg:grid-cols-3">
+          <div className="grid gap-6 lg:grid-cols-3 lg:gap-8">
             <div className="lg:col-span-2">
               {error && (
-                <div className="mb-6 rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-                  {error}
-                </div>
+                <motion.div
+                  initial={{ opacity: 0, y: -12, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ duration: 0.22, ease: "easeOut" }}
+                  className="fixed inset-x-4 top-20 z-40 rounded-xl border border-destructive/50 bg-white px-4 py-3 text-sm text-destructive shadow-lg sm:static sm:mb-6 sm:rounded-lg sm:bg-destructive/10 sm:shadow-none"
+                >
+                  <p className="font-semibold text-destructive">{error.title}</p>
+                  <p className="mt-1 leading-relaxed text-destructive/90">{error.message}</p>
+                </motion.div>
               )}
-              <form onSubmit={handleSubmit} className="space-y-8">
+              <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
                 {/* Shipping Information */}
                 <Card>
-                  <CardHeader>
-                    <CardTitle>Shipping Information</CardTitle>
+                  <CardHeader className="pb-4">
+                    <CardTitle className="text-lg sm:text-xl">Shipping Information</CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    {/* City, Zone, Area — one row first */}
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                      <div className="space-y-1.5">
-                        <label className="text-sm font-medium text-gray-700">City</label>
+                  <CardContent className="space-y-3 sm:space-y-5">
+                    <div className="grid grid-cols-2 gap-3">
+                      <Input
+                        ref={(el) => {
+                          fieldRefs.current.fullName = el;
+                        }}
+                        type="text"
+                        placeholder="Full name"
+                        aria-label="Full name"
+                        value={formData.fullName}
+                        onChange={(e) =>
+                          setFormData({ ...formData, fullName: e.target.value })
+                        }
+                        required
+                        className="h-11 text-sm"
+                      />
+                      <Input
+                        ref={(el) => {
+                          fieldRefs.current.email = el;
+                        }}
+                        type="email"
+                        placeholder="Email address"
+                        aria-label="Email address"
+                        value={formData.email}
+                        onChange={(e) =>
+                          setFormData({ ...formData, email: e.target.value })
+                        }
+                        required
+                        className="h-11 text-sm"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                        <Input
+                          ref={(el) => {
+                            fieldRefs.current.phone = el;
+                          }}
+                          type="tel"
+                          placeholder="Primary phone number"
+                          aria-label="Primary phone number"
+                          value={formData.phone}
+                          onChange={(e) =>
+                            setFormData({ ...formData, phone: e.target.value })
+                          }
+                          minLength={11}
+                          maxLength={14}
+                          required
+                          className="h-11 flex-1 text-sm"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowSecondaryPhone((v) => !v)}
+                          className="rounded px-2 py-1 text-left text-sm font-medium text-[hsl(var(--primary))] hover:underline focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 sm:whitespace-nowrap"
+                        >
+                          {showSecondaryPhone ? "− Remove" : "+ Add Secondary Number"}
+                        </button>
+                      </div>
+                      {showSecondaryPhone && (
+                        <Input
+                          ref={(el) => {
+                            fieldRefs.current.secondaryPhone = el;
+                          }}
+                          type="tel"
+                          placeholder="Secondary phone number (optional)"
+                          aria-label="Secondary phone number"
+                          value={formData.secondaryPhone}
+                          onChange={(e) =>
+                            setFormData({ ...formData, secondaryPhone: e.target.value })
+                          }
+                          minLength={11}
+                          maxLength={14}
+                          className="h-11 max-w-full text-sm sm:max-w-xs"
+                        />
+                      )}
+                    </div>
+
+                    {/* City, Zone, Area */}
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
+                      <div>
                         <select
+                          ref={(el) => {
+                            fieldRefs.current.cityId = el;
+                          }}
+                          aria-label="City"
                           value={formData.cityId}
                           onChange={(e) => {
                             const opt = e.target.options[e.target.selectedIndex];
@@ -463,9 +673,9 @@ export default function CheckoutPage() {
                             loadZones(e.target.value);
                           }}
                           required
-                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                          className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                         >
-                          <option value="">Select city</option>
+                          <option value="">City</option>
                           {citiesLoading && <option disabled>Loading...</option>}
                           {cities.map((c) => (
                             <option key={c.city_id} value={c.city_id}>
@@ -474,9 +684,12 @@ export default function CheckoutPage() {
                           ))}
                         </select>
                       </div>
-                      <div className="space-y-1.5">
-                        <label className="text-sm font-medium text-gray-700">Zone</label>
+                      <div>
                         <select
+                          ref={(el) => {
+                            fieldRefs.current.zoneId = el;
+                          }}
+                          aria-label="Zone"
                           value={formData.zoneId}
                           onChange={(e) => {
                             const opt = e.target.options[e.target.selectedIndex];
@@ -492,9 +705,9 @@ export default function CheckoutPage() {
                           }}
                           required
                           disabled={!formData.cityId || zonesLoading}
-                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50"
+                          className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50"
                         >
-                          <option value="">Select zone</option>
+                          <option value="">Zone</option>
                           {zonesLoading && <option disabled>Loading...</option>}
                           {zones.map((z) => (
                             <option key={z.zone_id} value={z.zone_id}>
@@ -503,9 +716,12 @@ export default function CheckoutPage() {
                           ))}
                         </select>
                       </div>
-                      <div className="space-y-1.5">
-                        <label className="text-sm font-medium text-gray-700">Area</label>
+                      <div className="col-span-2 sm:col-span-1">
                         <select
+                          ref={(el) => {
+                            fieldRefs.current.areaId = el;
+                          }}
+                          aria-label="Area"
                           value={formData.areaId}
                           onChange={(e) => {
                             const opt = e.target.options[e.target.selectedIndex];
@@ -515,10 +731,10 @@ export default function CheckoutPage() {
                               areaName: opt?.text ?? "",
                             }));
                           }}
-                        disabled={!formData.zoneId || areasLoading}
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50"
-                      >
-                        <option value="">Select area (optional)</option>
+                          disabled={!formData.zoneId || areasLoading}
+                          className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50"
+                        >
+                          <option value="">Area (optional)</option>
                           {areasLoading && <option disabled>Loading...</option>}
                           {areas.map((a) => (
                             <option key={a.area_id} value={a.area_id}>
@@ -529,96 +745,39 @@ export default function CheckoutPage() {
                       </div>
                     </div>
 
-                    <div className="space-y-1.5">
-                      <label className="text-sm font-medium text-gray-700">
-                        Detailed address
-                      </label>
+                    <div>
                       <Input
+                        ref={(el) => {
+                          fieldRefs.current.address = el;
+                        }}
                         type="text"
-                        placeholder="House, road, block, landmark (e.g. House Ka-167/A, Land Office Road, Bottola)"
+                        placeholder="Detailed address, house/road/block, landmark"
                         value={formData.address}
                         onChange={(e) =>
                           setFormData({ ...formData, address: e.target.value })
                         }
                         required
+                        className="h-11 text-sm"
                       />
-                    </div>
-
-                    <Input
-                      type="email"
-                      placeholder="Email"
-                      value={formData.email}
-                      onChange={(e) =>
-                        setFormData({ ...formData, email: e.target.value })
-                      }
-                      required
-                    />
-                    <Input
-                      type="text"
-                      placeholder="Full name"
-                      value={formData.fullName}
-                      onChange={(e) =>
-                        setFormData({ ...formData, fullName: e.target.value })
-                      }
-                      required
-                    />
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <Input
-                          type="tel"
-                          placeholder="Phone (e.g. 01712345678)"
-                          value={formData.phone}
-                          onChange={(e) =>
-                            setFormData({ ...formData, phone: e.target.value })
-                          }
-                          minLength={11}
-                          maxLength={14}
-                          required
-                          className="flex-1"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowSecondaryPhone((v) => !v)}
-                          className="whitespace-nowrap text-sm font-medium text-[hsl(var(--primary))] hover:underline focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded px-2 py-1"
-                        >
-                          {showSecondaryPhone ? "− Remove" : "+ Add Secondary Number"}
-                        </button>
-                      </div>
-                      {showSecondaryPhone && (
-                        <Input
-                          type="tel"
-                          placeholder="Secondary phone (optional)"
-                          value={formData.secondaryPhone}
-                          onChange={(e) =>
-                            setFormData({ ...formData, secondaryPhone: e.target.value })
-                          }
-                          minLength={11}
-                          maxLength={14}
-                          className="max-w-xs"
-                        />
-                      )}
                     </div>
                   </CardContent>
                 </Card>
 
-                <p className="text-sm text-gray-600">
-                  Payment: <strong>Cash on delivery</strong>—pay when your order arrives.
-                </p>
               </form>
             </div>
 
             {/* Order Summary */}
             <div>
-              <Card className="sticky top-24">
-                <CardHeader>
-                  <CardTitle>Order Summary</CardTitle>
+              <Card className="lg:sticky lg:top-24">
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-lg sm:text-xl">Order Summary</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-4">
                     {items.map((item) => (
                       <div
                         key={item.id}
-                        className="flex items-center gap-4 border-b border-border pb-4"
+                        className="flex items-start gap-3 border-b border-border pb-4"
                       >
                         <div className="relative h-16 w-16 overflow-hidden rounded-lg bg-gray-100">
                           <Image
@@ -629,50 +788,58 @@ export default function CheckoutPage() {
                             sizes="64px"
                           />
                         </div>
-                        <div className="flex-1">
-                          <p className="text-sm font-semibold text-gray-900">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold leading-snug text-gray-900">
                             {item.name}
                           </p>
-                          <p className="text-xs text-gray-600">
+                          <p className="mt-1 text-xs text-gray-600">
                             {formatPrice(item.price)}
                           </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() =>
-                              updateQuantity(item.id, item.quantity - 1)
-                            }
-                            aria-label="Decrease quantity"
-                          >
-                            <Minus className="h-4 w-4" />
-                          </Button>
-                          <span className="w-8 text-center text-sm font-semibold text-gray-900">
-                            {item.quantity}
-                          </span>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() =>
-                              updateQuantity(item.id, item.quantity + 1)
-                            }
-                            aria-label="Increase quantity"
-                          >
-                            <Plus className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => removeItem(item.id)}
-                            aria-label="Remove item"
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
+                          <div className="mt-3 flex items-center gap-1.5">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() =>
+                                updateQuantity(item.id, item.quantity - 1)
+                              }
+                              aria-label="Decrease quantity"
+                            >
+                              <Minus className="h-4 w-4" />
+                            </Button>
+                            <span className="w-7 text-center text-sm font-semibold text-gray-900">
+                              {item.quantity}
+                            </span>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() =>
+                                updateQuantity(item.id, item.quantity + 1)
+                              }
+                              aria-label="Increase quantity"
+                            >
+                              <Plus className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="ml-auto h-8 w-8"
+                              onClick={() => removeItem(item.id)}
+                              aria-label="Remove item"
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     ))}
                   </div>
+                  <Link href="/shop" className="block">
+                    <Button variant="outline" className="w-full">
+                      Add more
+                    </Button>
+                  </Link>
                   <div className="space-y-2 border-t border-border pt-4">
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Subtotal</span>
@@ -700,7 +867,7 @@ export default function CheckoutPage() {
                         </p>
                       )}
                     </div>
-                    <div className="flex justify-between border-t border-border pt-2 text-lg font-bold">
+                    <div className="flex justify-between border-t border-border pt-2 text-base font-bold sm:text-lg">
                       <span className="text-gray-900">Total</span>
                       <span className="text-gray-900">
                         {formatPrice(
@@ -713,9 +880,22 @@ export default function CheckoutPage() {
                       </span>
                     </div>
                   </div>
+                  <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-emerald-600 shadow-sm">
+                      <Banknote className="h-4 w-4" aria-hidden />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-emerald-900">
+                        Cash on delivery
+                      </p>
+                      <p className="text-xs text-emerald-800">
+                        Pay when it arrives.
+                      </p>
+                    </div>
+                  </div>
                   <Button
                     size="lg"
-                    className="w-full"
+                    className="h-11 w-full text-sm sm:h-12 sm:text-base"
                     onClick={handleSubmit}
                     type="submit"
                     disabled={loading || shippingPriceLoading}
