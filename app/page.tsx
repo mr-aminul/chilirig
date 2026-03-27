@@ -1,8 +1,8 @@
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Hero } from "@/components/sections/Hero";
+import { CategoryCardItem, CategoryCards } from "@/components/sections/CategoryCards";
 import { ValueProps } from "@/components/sections/ValueProps";
-import { CategoryCards } from "@/components/sections/CategoryCards";
 import { ProductGrid } from "@/components/sections/ProductGrid";
 import { HowToEnjoy } from "@/components/sections/HowToEnjoy";
 import { FeaturedBanner } from "@/components/sections/FeaturedBanner";
@@ -31,7 +31,7 @@ function getCategoryDescription(representative: Product): string {
     : representative.description.trim();
 }
 
-function buildCategoryCards(products: Product[]) {
+function buildCategoryCards(products: Product[]): CategoryCardItem[] {
   const groups = new Map<string, Product[]>();
 
   for (const product of products) {
@@ -82,7 +82,7 @@ function buildCategoryCards(products: Product[]) {
 
 export default async function Home() {
   let heroSlides = defaultHeroContent.slides;
-  let categories = [];
+  let categories: CategoryCardItem[] = [];
 
   try {
     const heroContent = await getHeroContent();

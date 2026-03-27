@@ -193,7 +193,12 @@ export default function HeroAdminPage() {
                       <ArrowDown className="mr-2 h-4 w-4" />
                       Down
                     </Button>
-                    <Button size="sm" variant="destructive" onClick={() => handleDelete(slide.id)}>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      className="border-red-200 bg-red-50 text-red-700 hover:border-red-300 hover:bg-red-100"
+                      onClick={() => handleDelete(slide.id)}
+                    >
                       <Trash2 className="mr-2 h-4 w-4" />
                       Delete
                     </Button>
