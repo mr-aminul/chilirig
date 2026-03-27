@@ -8,6 +8,7 @@ import {
   ChefHat, 
   Star, 
   Home,
+  ImageIcon,
   ShoppingBag,
   FileText,
   BookOpen,
@@ -24,6 +25,15 @@ const adminSections = [
     description: "Manage your product catalog",
     icon: Package,
     href: "/admin/products",
+    color: "text-primary",
+    bgColor: "bg-primary/10",
+  },
+  {
+    id: "hero",
+    title: "Hero",
+    description: "Manage homepage hero slides",
+    icon: ImageIcon,
+    href: "/admin/hero",
     color: "text-primary",
     bgColor: "bg-primary/10",
   },
@@ -166,7 +176,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Admin Sections */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
           {adminSections.map((section) => {
             const Icon = section.icon;
             return (

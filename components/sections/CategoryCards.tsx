@@ -7,28 +7,24 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { SectionContainer } from "@/components/SectionContainer";
 
-const categories = [
-  {
-    title: "Original Recipe",
-    description: "Our signature blend. Balanced heat, complex flavor.",
-    image: "/images/categories/category-original.png",
-    href: "/shop?category=original",
-  },
-  {
-    title: "Beef Chili Oil",
-    description: "Rich, umami-packed. Made with real beef. Bites back.",
-    image: "/images/categories/category-beef.png",
-    href: "/shop?category=beef",
-  },
-  {
-    title: "Gift Sets",
-    description: "Perfect for spice lovers. Curated collections.",
-    image: "/images/categories/category-gift-set.png",
-    href: "/shop?category=gift-set",
-  },
-];
+export interface CategoryCardItem {
+  category: string;
+  title: string;
+  description: string;
+  image: string;
+  href: string;
+  ctaLabel: string;
+}
 
-export function CategoryCards() {
+interface CategoryCardsProps {
+  categories: CategoryCardItem[];
+}
+
+export function CategoryCards({ categories }: CategoryCardsProps) {
+  if (categories.length === 0) {
+    return null;
+  }
+
   return (
     <SectionContainer background="theme" className="relative overflow-hidden bg-[hsl(var(--primary))]">
       <div className="relative z-10">
@@ -40,25 +36,25 @@ export function CategoryCards() {
             Find your perfect heat level and flavor profile
           </p>
         </div>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="mx-auto grid w-full max-w-5xl gap-6 md:grid-cols-2">
           {categories.map((category, index) => (
             <motion.div
-              key={category.title}
+              key={category.category}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.4, delay: index * 0.1 }}
-              className="h-full"
+              className="mx-auto h-full w-full max-w-md"
             >
               <Card className="group h-full flex flex-col overflow-hidden border border-white/35 bg-white/12 backdrop-blur-xl transition-all hover:bg-white/18 hover:shadow-xl hover:shadow-black/30">
                 <Link href={category.href}>
-                <div className="relative h-64 flex-shrink-0 overflow-hidden border-b border-white/25 bg-black/20">
+                  <div className="relative h-56 flex-shrink-0 overflow-hidden border-b border-white/25 bg-black/20">
                     <Image
                       src={category.image}
                       alt={category.title}
                       fill
                       className="object-cover transition-transform duration-300 group-hover:scale-110"
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 448px"
                     />
                   </div>
                 </Link>
@@ -73,7 +69,7 @@ export function CategoryCards() {
                     <Button
                       className="w-full border-0 bg-black text-white shadow-lg hover:bg-black/90 hover:shadow-xl"
                     >
-                      Shop {category.title}
+                      {category.ctaLabel}
                     </Button>
                   </Link>
                 </CardContent>

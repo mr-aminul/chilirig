@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { Product, HeatLevel } from "@/data/products";
+import { HeatLevel, Product } from "@/data/products";
 import { requireAuth } from "@/lib/auth";
+import { getProductBySlug, getProducts } from "@/lib/products-db";
 import { generateSlug, normalizeImageUrl } from "@/lib/utils";
 import { getSupabaseAdmin } from "@/lib/supabase-server";
 
@@ -27,58 +28,19 @@ const productUpdateSchema = productCreateSchema.partial().extend({
   id: z.string().min(1),
 });
 
-function toProduct(row: any): Product {
-  const image = normalizeImageUrl(row.image);
-  const images: string[] = Array.isArray(row.images)
-    ? row.images.map((item: string) => normalizeImageUrl(item))
-    : [];
-  const galleryImages = [image, ...images.filter((item: string) => item && item !== image)];
-
-  return {
-    id: row.id,
-    name: row.name,
-    slug: row.slug,
-    description: row.description,
-    price: Number(row.price),
-    originalPrice: row.original_price != null ? Number(row.original_price) : undefined,
-    image,
-    images: galleryImages.length > 0 ? galleryImages : [image],
-    heatLevel: row.heat_level as HeatLevel,
-    category: row.category,
-    inStock: row.in_stock,
-    flavorNotes: row.flavor_notes ?? [],
-    ingredients: row.ingredients ?? [],
-    nutrition: row.nutrition ?? undefined,
-    isBestSeller: row.is_best_seller ?? false,
-    isNew: row.is_new ?? false,
-    isBundle: row.is_bundle ?? false,
-  };
-}
-
 // GET - Fetch all products (or one by slug)
 export async function GET(request: NextRequest) {
   try {
-    const supabase = getSupabaseAdmin();
     const { searchParams } = new URL(request.url);
     const slug = searchParams.get("slug");
 
     if (slug) {
-      const { data, error } = await supabase
-        .from("products")
-        .select("*")
-        .eq("slug", slug)
-        .single();
-      if (error) throw error;
-      return NextResponse.json({ success: true, data: toProduct(data) });
+      const product = await getProductBySlug(slug);
+      return NextResponse.json({ success: true, data: product });
     }
 
-    const { data, error } = await supabase
-      .from("products")
-      .select("*")
-      .order("created_at", { ascending: true });
-
-    if (error) throw error;
-    return NextResponse.json({ success: true, data: (data ?? []).map(toProduct) });
+    const products = await getProducts();
+    return NextResponse.json({ success: true, data: products });
   } catch (error) {
     return NextResponse.json(
       { success: false, error: "Failed to fetch products" },
@@ -140,7 +102,8 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) throw error;
-    return NextResponse.json({ success: true, data: toProduct(data) });
+    const product = await getProductBySlug(data.slug);
+    return NextResponse.json({ success: true, data: product });
   } catch (error) {
     return NextResponse.json(
       { success: false, error: "Failed to create product" },
@@ -224,7 +187,8 @@ export async function PUT(request: NextRequest) {
       .single();
 
     if (error) throw error;
-    return NextResponse.json({ success: true, data: toProduct(data) });
+    const product = await getProductBySlug(data.slug);
+    return NextResponse.json({ success: true, data: product });
   } catch (error) {
     return NextResponse.json(
       { success: false, error: "Failed to update product" },
