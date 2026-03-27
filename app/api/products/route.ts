@@ -29,8 +29,10 @@ const productUpdateSchema = productCreateSchema.partial().extend({
 
 function toProduct(row: any): Product {
   const image = normalizeImageUrl(row.image);
-  const images = Array.isArray(row.images) ? row.images.map(normalizeImageUrl) : [];
-  const galleryImages = [image, ...images.filter((item) => item && item !== image)];
+  const images: string[] = Array.isArray(row.images)
+    ? row.images.map((item: string) => normalizeImageUrl(item))
+    : [];
+  const galleryImages = [image, ...images.filter((item: string) => item && item !== image)];
 
   return {
     id: row.id,
@@ -102,11 +104,11 @@ export async function POST(request: NextRequest) {
     const body = parsed.data;
     const parsedHeatLevel = parseInt(String(body.heatLevel), 10);
     const image = normalizeImageUrl(body.image);
-    const images =
+    const images: string[] =
       (body.images && body.images.length > 0 ? body.images : [body.image])
-        .map(normalizeImageUrl)
-        .filter(Boolean);
-    const galleryImages = [image, ...images.filter((item) => item !== image)];
+        .map((item: string) => normalizeImageUrl(item))
+        .filter((item: string) => Boolean(item));
+    const galleryImages = [image, ...images.filter((item: string) => item !== image)];
     let heatLevel: HeatLevel = 3;
     if (parsedHeatLevel === 1 || parsedHeatLevel === 2 || parsedHeatLevel === 3 || parsedHeatLevel === 4 || parsedHeatLevel === 5) {
       heatLevel = parsedHeatLevel;
@@ -176,11 +178,13 @@ export async function PUT(request: NextRequest) {
       updates.image != null ? normalizeImageUrl(updates.image) : null;
     const normalizedImages =
       updates.images != null
-        ? updates.images.map(normalizeImageUrl).filter(Boolean)
+        ? updates.images
+            .map((item: string) => normalizeImageUrl(item))
+            .filter((item: string) => Boolean(item))
         : null;
     const galleryImages =
       normalizedImages != null && normalizedImage != null
-        ? [normalizedImage, ...normalizedImages.filter((item) => item !== normalizedImage)]
+        ? [normalizedImage, ...normalizedImages.filter((item: string) => item !== normalizedImage)]
         : normalizedImages;
     const updatePayload: Record<string, any> = {
       ...(updates.name != null && { name: updates.name }),
