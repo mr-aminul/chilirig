@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Product } from "@/data/products";
 import ProductForm from "@/components/admin/ProductForm";
+import { formatPrice } from "@/lib/utils";
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -176,10 +177,10 @@ export default function ProductsPage() {
                 <CardContent>
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-2xl font-bold">৳{product.price}</p>
+                      <p className="text-2xl font-bold">{formatPrice(product.price)}</p>
                       {product.originalPrice && (
                         <p className="text-sm text-muted-foreground line-through">
-                          ৳{product.originalPrice}
+                          {formatPrice(product.originalPrice)}
                         </p>
                       )}
                     </div>
