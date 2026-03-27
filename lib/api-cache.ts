@@ -1,5 +1,5 @@
 const DEFAULT_TTL_MS = 10 * 60 * 1000; // 10 minutes
-const CACHE_PREFIX = "api-cache:";
+const CACHE_PREFIX = "api-cache:v2:";
 
 type CacheRecord<T> = {
   expiresAt: number;
@@ -34,6 +34,32 @@ function writeToSessionStorage<T>(key: string, value: CacheRecord<T>) {
     window.sessionStorage.setItem(getStorageKey(key), JSON.stringify(value));
   } catch {
     // Ignore storage quota and availability issues
+  }
+}
+
+export function invalidateApiCache(prefix: string) {
+  for (const key of Array.from(memoryCache.keys())) {
+    if (key.startsWith(prefix)) {
+      memoryCache.delete(key);
+    }
+  }
+
+  if (!isBrowser()) return;
+
+  try {
+    const storageKeysToRemove: string[] = [];
+    for (let i = 0; i < window.sessionStorage.length; i += 1) {
+      const storageKey = window.sessionStorage.key(i);
+      if (storageKey?.startsWith(getStorageKey(prefix))) {
+        storageKeysToRemove.push(storageKey);
+      }
+    }
+
+    storageKeysToRemove.forEach((storageKey) =>
+      window.sessionStorage.removeItem(storageKey)
+    );
+  } catch {
+    // Ignore storage availability issues
   }
 }
 

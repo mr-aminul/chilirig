@@ -20,3 +20,54 @@ export function generateSlug(name: string): string {
     .replace(/\s+/g, "-") // Replace spaces with hyphens
     .replace(/-+/g, "-"); // Replace multiple hyphens with single hyphen
 }
+
+function extractGoogleDriveFileId(value: string): string | null {
+  try {
+    const url = new URL(value);
+    if (url.hostname === "drive.google.com" || url.hostname === "www.drive.google.com") {
+      const idFromQuery = url.searchParams.get("id");
+      if (idFromQuery) {
+        return idFromQuery;
+      }
+
+      const fileMatch = url.pathname.match(/\/file\/d\/([^/]+)/);
+      return fileMatch?.[1] ?? null;
+    }
+
+    if (url.hostname === "lh3.googleusercontent.com") {
+      const fileMatch = url.pathname.match(/\/d\/([^/=]+)/);
+      return fileMatch?.[1] ?? null;
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export function normalizeImageUrl(value: string): string {
+  const trimmedValue = value.trim();
+  if (!trimmedValue) {
+    return trimmedValue;
+  }
+
+  if (trimmedValue.startsWith("/")) {
+    return trimmedValue;
+  }
+
+  const googleDriveFileId = extractGoogleDriveFileId(trimmedValue);
+  if (googleDriveFileId) {
+    return `/api/drive-image?id=${googleDriveFileId}&size=w2000`;
+  }
+
+  try {
+    const url = new URL(trimmedValue);
+    if (url.protocol === "http:" || url.protocol === "https:") {
+      return `/api/remote-image?url=${encodeURIComponent(trimmedValue)}`;
+    }
+  } catch {
+    return trimmedValue;
+  }
+
+  return trimmedValue;
+}

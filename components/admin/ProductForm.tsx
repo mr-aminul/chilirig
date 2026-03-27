@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Product } from "@/data/products";
-import { generateSlug } from "@/lib/utils";
+import { generateSlug, normalizeImageUrl } from "@/lib/utils";
+import { invalidateApiCache } from "@/lib/api-cache";
 
 interface ProductFormProps {
   product?: Product | null;
@@ -71,6 +72,13 @@ export default function ProductForm({ product, onClose }: ProductFormProps) {
     setLoading(true);
 
     try {
+      const image = normalizeImageUrl(formData.image);
+      const images = (
+        formData.images
+          ? formData.images.split(",").map((img) => normalizeImageUrl(img))
+          : [image]
+      ).filter(Boolean);
+
       const payload = {
         ...(product && { id: product.id }),
         name: formData.name,
@@ -78,10 +86,8 @@ export default function ProductForm({ product, onClose }: ProductFormProps) {
         description: formData.description,
         price: formData.price,
         originalPrice: formData.originalPrice || undefined,
-        image: formData.image,
-        images: formData.images
-          ? formData.images.split(",").map((img) => img.trim())
-          : [formData.image],
+        image,
+        images,
         heatLevel: formData.heatLevel,
         category: formData.category,
         inStock: formData.inStock,
@@ -115,6 +121,7 @@ export default function ProductForm({ product, onClose }: ProductFormProps) {
 
       const result = await response.json();
       if (result.success) {
+        invalidateApiCache("/api/products");
         onClose();
       } else {
         alert("Failed to save product: " + result.error);

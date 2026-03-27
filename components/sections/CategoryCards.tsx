@@ -30,23 +30,7 @@ const categories = [
 
 export function CategoryCards() {
   return (
-    <SectionContainer background="theme" className="relative overflow-hidden bg-black">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0"
-      >
-        <Image
-          src="/images/hero/fire-flames-on-black-background-free-photo.jpg"
-          alt=""
-          fill
-          priority
-          className="object-cover object-bottom"
-          sizes="100vw"
-        />
-        <div className="absolute inset-0 bg-black/55" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.08),transparent_35%),radial-gradient(circle_at_80%_70%,rgba(239,68,68,0.12),transparent_40%)]" />
-      </div>
-
+    <SectionContainer background="theme" className="relative overflow-hidden bg-[hsl(var(--primary))]">
       <div className="relative z-10">
         <div className="mb-12 text-center">
           <h2 className="mb-4 font-display text-3xl font-bold text-white sm:text-4xl">
@@ -87,7 +71,7 @@ export function CategoryCards() {
                   </p>
                   <Link href={category.href} className="mt-auto">
                     <Button
-                      className="w-full border-0 bg-[hsl(var(--primary))] text-white shadow-lg hover:bg-[hsl(var(--primary-hover))] hover:shadow-xl"
+                      className="w-full border-0 bg-black text-white shadow-lg hover:bg-black/90 hover:shadow-xl"
                     >
                       Shop {category.title}
                     </Button>

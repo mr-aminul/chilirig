@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { Product, HeatLevel } from "@/data/products";
 import { requireAuth } from "@/lib/auth";
-import { generateSlug } from "@/lib/utils";
+import { generateSlug, normalizeImageUrl } from "@/lib/utils";
 import { getSupabaseAdmin } from "@/lib/supabase-server";
 
 const productCreateSchema = z.object({
@@ -28,6 +28,10 @@ const productUpdateSchema = productCreateSchema.partial().extend({
 });
 
 function toProduct(row: any): Product {
+  const image = normalizeImageUrl(row.image);
+  const images = Array.isArray(row.images) ? row.images.map(normalizeImageUrl) : [];
+  const galleryImages = [image, ...images.filter((item) => item && item !== image)];
+
   return {
     id: row.id,
     name: row.name,
@@ -35,8 +39,8 @@ function toProduct(row: any): Product {
     description: row.description,
     price: Number(row.price),
     originalPrice: row.original_price != null ? Number(row.original_price) : undefined,
-    image: row.image,
-    images: row.images ?? [],
+    image,
+    images: galleryImages.length > 0 ? galleryImages : [image],
     heatLevel: row.heat_level as HeatLevel,
     category: row.category,
     inStock: row.in_stock,
@@ -97,6 +101,12 @@ export async function POST(request: NextRequest) {
     }
     const body = parsed.data;
     const parsedHeatLevel = parseInt(String(body.heatLevel), 10);
+    const image = normalizeImageUrl(body.image);
+    const images =
+      (body.images && body.images.length > 0 ? body.images : [body.image])
+        .map(normalizeImageUrl)
+        .filter(Boolean);
+    const galleryImages = [image, ...images.filter((item) => item !== image)];
     let heatLevel: HeatLevel = 3;
     if (parsedHeatLevel === 1 || parsedHeatLevel === 2 || parsedHeatLevel === 3 || parsedHeatLevel === 4 || parsedHeatLevel === 5) {
       heatLevel = parsedHeatLevel;
@@ -108,8 +118,8 @@ export async function POST(request: NextRequest) {
       description: body.description,
       price: parseFloat(String(body.price)),
       original_price: body.originalPrice ? parseFloat(String(body.originalPrice)) : null,
-      image: body.image,
-      images: body.images || [body.image],
+      image,
+      images: galleryImages.length > 0 ? galleryImages : [image],
       heat_level: heatLevel,
       category: body.category,
       in_stock: body.inStock !== false,
@@ -162,6 +172,16 @@ export async function PUT(request: NextRequest) {
 
     const parsedHeatLevel =
       updates.heatLevel != null ? parseInt(String(updates.heatLevel), 10) : null;
+    const normalizedImage =
+      updates.image != null ? normalizeImageUrl(updates.image) : null;
+    const normalizedImages =
+      updates.images != null
+        ? updates.images.map(normalizeImageUrl).filter(Boolean)
+        : null;
+    const galleryImages =
+      normalizedImages != null && normalizedImage != null
+        ? [normalizedImage, ...normalizedImages.filter((item) => item !== normalizedImage)]
+        : normalizedImages;
     const updatePayload: Record<string, any> = {
       ...(updates.name != null && { name: updates.name }),
       ...(updates.name != null && { slug: generateSlug(updates.name) }),
@@ -172,8 +192,8 @@ export async function PUT(request: NextRequest) {
           ? parseFloat(String(updates.originalPrice))
           : null,
       }),
-      ...(updates.image != null && { image: updates.image }),
-      ...(updates.images != null && { images: updates.images }),
+      ...(normalizedImage != null && { image: normalizedImage }),
+      ...(galleryImages != null && { images: galleryImages }),
       ...(parsedHeatLevel != null &&
       (parsedHeatLevel === 1 ||
         parsedHeatLevel === 2 ||

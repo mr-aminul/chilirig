@@ -79,9 +79,10 @@ export function Footer() {
     <footer className="relative overflow-hidden border-t border-white/15">
       <div className="pointer-events-none absolute inset-0" aria-hidden>
         <Image
-          src="/images/hero/fire-flames-on-black-background-free-photo.jpg"
+          src="/images/giphy.gif"
           alt=""
           fill
+          unoptimized
           className="object-cover object-bottom"
           sizes="100vw"
         />
