@@ -20,7 +20,7 @@ export default function StoryPage() {
 
   const fetchStory = async () => {
     try {
-      const response = await fetch("/api/story");
+      const response = await fetch("/api/story", { cache: "no-store" });
       const result = await response.json();
       if (result.success) {
         setStoryContent(result.data);

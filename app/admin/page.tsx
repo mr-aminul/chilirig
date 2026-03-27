@@ -13,12 +13,22 @@ import {
   FileText,
   BookOpen,
   HelpCircle,
+  Truck,
   LogOut
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 const adminSections = [
+  {
+    id: "orders",
+    title: "Orders",
+    description: "Review orders and send them to Pathao",
+    icon: Truck,
+    href: "/admin/orders",
+    color: "text-primary",
+    bgColor: "bg-primary/10",
+  },
   {
     id: "products",
     title: "Products",

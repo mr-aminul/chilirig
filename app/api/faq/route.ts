@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
 import { getSupabaseAdmin } from "@/lib/supabase-server";
 
+const NO_STORE_HEADERS = { "Cache-Control": "no-store, max-age=0" };
+
 type FAQQuestion = { id: string; question: string; answer: string };
 type FAQCategoryResponse = { id: string; category: string; questions: FAQQuestion[] };
 
@@ -37,11 +39,14 @@ async function getFAQTree(): Promise<FAQCategoryResponse[]> {
 // GET - Fetch all FAQs
 export async function GET() {
   try {
-    return NextResponse.json({ success: true, data: await getFAQTree() });
+    return NextResponse.json(
+      { success: true, data: await getFAQTree() },
+      { headers: NO_STORE_HEADERS }
+    );
   } catch (error) {
     return NextResponse.json(
       { success: false, error: "Failed to fetch FAQs" },
-      { status: 500 }
+      { status: 500, headers: NO_STORE_HEADERS }
     );
   }
 }

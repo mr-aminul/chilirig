@@ -30,7 +30,7 @@ export default function HeroAdminPage() {
 
   const fetchHeroContent = async () => {
     try {
-      const response = await fetch("/api/hero");
+      const response = await fetch("/api/hero", { cache: "no-store" });
       const result = await response.json();
       if (result.success) {
         setHeroContent(result.data);

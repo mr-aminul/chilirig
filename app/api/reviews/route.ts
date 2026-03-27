@@ -3,6 +3,8 @@ import { Review } from "@/data/reviews";
 import { requireAuth } from "@/lib/auth";
 import { getSupabaseAdmin } from "@/lib/supabase-server";
 
+const NO_STORE_HEADERS = { "Cache-Control": "no-store, max-age=0" };
+
 function toReview(row: any): Review {
   const isoDate =
     row.review_date instanceof Date
@@ -27,11 +29,14 @@ export async function GET() {
       .select("*")
       .order("review_date", { ascending: false });
     if (error) throw error;
-    return NextResponse.json({ success: true, data: (data ?? []).map(toReview) });
+    return NextResponse.json(
+      { success: true, data: (data ?? []).map(toReview) },
+      { headers: NO_STORE_HEADERS }
+    );
   } catch (error) {
     return NextResponse.json(
       { success: false, error: "Failed to fetch reviews" },
-      { status: 500 }
+      { status: 500, headers: NO_STORE_HEADERS }
     );
   }
 }

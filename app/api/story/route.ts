@@ -3,6 +3,8 @@ import { StoryContent } from "@/data/story";
 import { requireAuth } from "@/lib/auth";
 import { getSupabaseAdmin } from "@/lib/supabase-server";
 
+const NO_STORE_HEADERS = { "Cache-Control": "no-store, max-age=0" };
+
 async function loadStory(): Promise<StoryContent | null> {
   const supabase = getSupabaseAdmin();
   const { data: page, error: pageError } = await supabase
@@ -67,11 +69,11 @@ async function loadStory(): Promise<StoryContent | null> {
 export async function GET() {
   try {
     const story = await loadStory();
-    return NextResponse.json({ success: true, data: story });
+    return NextResponse.json({ success: true, data: story }, { headers: NO_STORE_HEADERS });
   } catch (error) {
     return NextResponse.json(
       { success: false, error: "Failed to fetch story content" },
-      { status: 500 }
+      { status: 500, headers: NO_STORE_HEADERS }
     );
   }
 }

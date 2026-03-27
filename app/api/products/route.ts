@@ -6,6 +6,8 @@ import { getProductBySlug, getProducts } from "@/lib/products-db";
 import { generateSlug, normalizeImageUrl } from "@/lib/utils";
 import { getSupabaseAdmin } from "@/lib/supabase-server";
 
+const NO_STORE_HEADERS = { "Cache-Control": "no-store, max-age=0" };
+
 const productCreateSchema = z.object({
   name: z.string().min(1),
   description: z.string().min(1),
@@ -36,15 +38,15 @@ export async function GET(request: NextRequest) {
 
     if (slug) {
       const product = await getProductBySlug(slug);
-      return NextResponse.json({ success: true, data: product });
+      return NextResponse.json({ success: true, data: product }, { headers: NO_STORE_HEADERS });
     }
 
     const products = await getProducts();
-    return NextResponse.json({ success: true, data: products });
+    return NextResponse.json({ success: true, data: products }, { headers: NO_STORE_HEADERS });
   } catch (error) {
     return NextResponse.json(
       { success: false, error: "Failed to fetch products" },
-      { status: 500 }
+      { status: 500, headers: NO_STORE_HEADERS }
     );
   }
 }

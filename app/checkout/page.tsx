@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCart, useOrders } from "@/lib/store";
 import { formatPrice } from "@/lib/utils";
 import Image from "next/image";
-import { Minus, Plus, Trash2, Copy, Check, ExternalLink, Banknote } from "lucide-react";
+import { Minus, Plus, Trash2, Copy, Check, Banknote } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 
@@ -48,9 +48,6 @@ export default function CheckoutPage() {
   const addOrder = useOrders((s) => s.addOrder);
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
-  const [pathaoConsignmentId, setPathaoConsignmentId] = useState<string | null>(null);
-  const [orderPhone, setOrderPhone] = useState<string | null>(null);
-  const [pathaoError, setPathaoError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<CheckoutErrorState | null>(null);
   const [formData, setFormData] = useState({
@@ -76,7 +73,7 @@ export default function CheckoutPage() {
   const [shippingPrice, setShippingPrice] = useState<number | null>(null);
   const [shippingPriceLoading, setShippingPriceLoading] = useState(false);
   const [shippingPriceError, setShippingPriceError] = useState<string | null>(null);
-  const [copiedField, setCopiedField] = useState<"order" | "tracking" | null>(null);
+  const [copiedField, setCopiedField] = useState<"order" | null>(null);
   const fieldRefs = useRef<
     Partial<Record<CheckoutFieldKey, HTMLInputElement | HTMLSelectElement | null>>
   >({});
@@ -266,7 +263,7 @@ export default function CheckoutPage() {
     }
   }, [formData.cityId, formData.zoneId, cartWeightKg, loadShippingPrice]);
 
-  const copyToClipboard = (text: string, field: "order" | "tracking") => {
+  const copyToClipboard = (text: string, field: "order") => {
     if (!text) return;
     navigator.clipboard.writeText(text).then(() => {
       setCopiedField(field);
@@ -341,16 +338,13 @@ export default function CheckoutPage() {
       }
 
       setOrderId(data.orderId ?? null);
-      setPathaoConsignmentId(data.pathaoConsignmentId ?? null);
-      setOrderPhone(formData.phone.trim() || null);
-      setPathaoError(data.pathaoError ?? null);
       setOrderPlaced(true);
       clearCart(); // Empty cart as soon as order is placed
       addOrder({
         orderId: data.orderId,
         date: new Date().toISOString(),
-        pathaoConsignmentId: data.pathaoConsignmentId ?? null,
-        orderPhone: formData.phone.trim() || null,
+        pathaoConsignmentId: null,
+        orderPhone: null,
         total,
         itemsSummary: items.map((i) => `${i.name} × ${i.quantity}`).join(" | "),
       });
@@ -364,16 +358,6 @@ export default function CheckoutPage() {
       setLoading(false);
     }
   };
-
-  // Normalize phone for Pathao tracking URL (11 digits, 01...)
-  const trackingPhone =
-    orderPhone != null
-      ? orderPhone.replace(/\D/g, "").replace(/^(\d{10})$/, "0$1").slice(0, 11)
-      : null;
-  const pathaoTrackingUrl =
-    pathaoConsignmentId && trackingPhone && trackingPhone.length === 11
-      ? `https://merchant.pathao.com/tracking?consignment_id=${encodeURIComponent(pathaoConsignmentId)}&phone=${encodeURIComponent(trackingPhone)}`
-      : null;
 
   if (orderPlaced) {
     return (
@@ -427,84 +411,32 @@ export default function CheckoutPage() {
                 </p>
               </div>
 
-              {pathaoError && (
-                <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50/80 px-4 py-3 text-left text-sm text-amber-800">
-                  <strong>Note:</strong> Your order is confirmed, but we couldn&apos;t create the Pathao delivery automatically. We&apos;ll arrange delivery and contact you soon.
-                  <details className="mt-2">
-                    <summary className="cursor-pointer text-amber-700">Technical details</summary>
-                    <pre className="mt-1 overflow-auto text-xs">{pathaoError}</pre>
-                  </details>
-                </div>
-              )}
-
-              {/* Order Summary card - both IDs in one line with individual copy buttons */}
-              {(orderId || pathaoConsignmentId) && (
+              {orderId && (
                 <div className="mb-6 overflow-hidden rounded-2xl border border-gray-200 bg-gray-50/50 shadow-sm">
                   <div className="border-b border-gray-200/80 bg-white px-4 py-4 sm:px-5">
                     <h2 className="text-base font-bold text-gray-900 sm:text-lg">Order Summary</h2>
                   </div>
                   <div className="flex flex-wrap items-center gap-x-6 gap-y-3 border-b border-gray-100 bg-white px-4 py-3 sm:px-5">
-                    {orderId && (
-                      <div className="flex min-w-0 flex-1 items-center gap-2 sm:flex-initial">
-                        <span className="shrink-0 text-sm font-medium text-gray-600">Order ID</span>
-                        <span className="min-w-0 truncate font-mono text-sm font-semibold text-gray-900 tracking-tight">
-                          {orderId}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => copyToClipboard(orderId, "order")}
-                          className="shrink-0 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] focus:ring-offset-1"
-                          aria-label="Copy order ID"
-                        >
-                          {copiedField === "order" ? (
-                            <Check className="h-4 w-4 text-emerald-600" aria-hidden />
-                          ) : (
-                            <Copy className="h-4 w-4" aria-hidden />
-                          )}
-                        </button>
-                      </div>
-                    )}
-                    {pathaoConsignmentId && (
-                      <div className="flex min-w-0 flex-1 items-center gap-2 sm:flex-initial">
-                        <span className="shrink-0 text-sm font-medium text-gray-600">Tracking ID</span>
-                        <span className="min-w-0 truncate font-mono text-sm font-semibold text-gray-900 tracking-tight">
-                          {pathaoConsignmentId}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => copyToClipboard(pathaoConsignmentId, "tracking")}
-                          className="shrink-0 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] focus:ring-offset-1"
-                          aria-label="Copy tracking ID"
-                        >
-                          {copiedField === "tracking" ? (
-                            <Check className="h-4 w-4 text-emerald-600" aria-hidden />
-                          ) : (
-                            <Copy className="h-4 w-4" aria-hidden />
-                          )}
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                  <div className="border-t border-gray-100 bg-gray-50/50 px-4 py-4 sm:px-5">
-                    {pathaoTrackingUrl && (
-                      <a
-                        href={pathaoTrackingUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex w-full items-center justify-center gap-2 rounded-xl bg-[hsl(var(--primary))] px-4 py-3.5 text-sm font-semibold text-[hsl(var(--primary-foreground))] transition-colors hover:bg-[hsl(var(--primary-hover))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] focus:ring-offset-2"
+                    <div className="flex min-w-0 flex-1 items-center gap-2 sm:flex-initial">
+                      <span className="shrink-0 text-sm font-medium text-gray-600">Order ID</span>
+                      <span className="min-w-0 truncate font-mono text-sm font-semibold text-gray-900 tracking-tight">
+                        {orderId}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => copyToClipboard(orderId, "order")}
+                        className="shrink-0 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] focus:ring-offset-1"
+                        aria-label="Copy order ID"
                       >
-                        <ExternalLink className="h-4 w-4 shrink-0" aria-hidden />
-                        Track Delivery
-                      </a>
-                    )}
+                        {copiedField === "order" ? (
+                          <Check className="h-4 w-4 text-emerald-600" aria-hidden />
+                        ) : (
+                          <Copy className="h-4 w-4" aria-hidden />
+                        )}
+                      </button>
+                    </div>
                   </div>
                 </div>
-              )}
-
-              {pathaoTrackingUrl && (
-                <p className="mb-6 text-center text-sm font-medium text-emerald-600">
-                  Your order is confirmed and in transit.
-                </p>
               )}
 
               <div className="flex flex-col items-center sm:flex-row sm:justify-center">

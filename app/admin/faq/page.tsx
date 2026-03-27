@@ -30,7 +30,7 @@ export default function FAQPage() {
 
   const fetchFAQs = async () => {
     try {
-      const response = await fetch("/api/faq");
+      const response = await fetch("/api/faq", { cache: "no-store" });
       const result = await response.json();
       if (result.success) {
         setFaqs(result.data);

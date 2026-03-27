@@ -16,6 +16,9 @@ import { defaultHeroContent } from "@/data/hero";
 import { getHeroContent } from "@/lib/hero-content";
 import { getProducts } from "@/lib/products-db";
 
+/** Hero and products come from Supabase — avoid static page cache showing stale slides. */
+export const dynamic = "force-dynamic";
+
 function getCategoryTitle(category: string, representative: Product): string {
   if (category === "gift-set") {
     return "Gift Sets";

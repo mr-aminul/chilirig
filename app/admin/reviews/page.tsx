@@ -29,7 +29,7 @@ export default function ReviewsPage() {
 
   const fetchReviews = async () => {
     try {
-      const response = await fetch("/api/reviews");
+      const response = await fetch("/api/reviews", { cache: "no-store" });
       const result = await response.json();
       if (result.success) {
         setReviews(result.data);

@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import {
-  createPathaoOrder,
-  normalizePathaoPhone,
-} from "@/lib/pathao";
+import { normalizePathaoPhone } from "@/lib/pathao";
 import { getSupabaseAdmin } from "@/lib/supabase-server";
 
 export interface OrderItemPayload {
@@ -105,67 +102,8 @@ export async function POST(request: NextRequest) {
     }
 
     const orderId = generateOrderId();
-    const itemsSummary = items
-      .map((i) => `${i.name} × ${i.quantity}`)
-      .join(" | ");
+    const itemsSummary = items.map((i) => `${i.name} × ${i.quantity}`).join(" | ");
     const shippingCost = typeof shipping === "number" ? shipping : 0;
-    const totalWeight = Math.max(0.5, items.reduce((sum, i) => sum + i.quantity * 0.5, 0));
-
-    // Create Pathao Courier delivery order first so we can save consignment ID to the sheet
-    let pathaoConsignmentId: string | null = null;
-    let pathaoError: string | null = null;
-
-    const storeId = process.env.PATHAO_STORE_ID;
-    if (
-      storeId &&
-      process.env.PATHAO_CLIENT_ID &&
-      process.env.PATHAO_CLIENT_SECRET &&
-      process.env.PATHAO_USERNAME &&
-      process.env.PATHAO_PASSWORD
-    ) {
-      const recipientAddress = [address, area_name, zone_name, city_name]
-        .filter(Boolean)
-        .join(", ");
-      if (recipientAddress.length < 10 || recipientAddress.length > 220) {
-        pathaoError = "Address length must be between 10 and 220 characters for Pathao";
-      } else {
-        const secondaryPhoneNorm = secondaryPhone
-          ? normalizePathaoPhone(secondaryPhone)
-          : undefined;
-        const pathaoSecondary =
-          secondaryPhoneNorm &&
-          secondaryPhoneNorm.length === 11 &&
-          secondaryPhoneNorm.startsWith("01")
-            ? secondaryPhoneNorm
-            : undefined;
-
-        try {
-          const pathaoRes = await createPathaoOrder({
-            store_id: parseInt(storeId, 10),
-            merchant_order_id: orderId,
-            recipient_name: fullName.trim(),
-            recipient_phone: recipientPhone,
-            ...(pathaoSecondary && { recipient_secondary_phone: pathaoSecondary }),
-            recipient_address: recipientAddress,
-            recipient_city: Number(city_id),
-            recipient_zone: Number(zone_id),
-            ...(area_id != null && area_id !== 0 && { recipient_area: Number(area_id) }),
-            delivery_type: 48,
-            item_type: 2,
-            item_quantity: 1,
-            item_weight: String(totalWeight),
-            amount_to_collect: Math.round(total),
-            item_description:
-              itemsSummary.length <= 220 ? itemsSummary : `Order ${orderId}`,
-          });
-          pathaoConsignmentId = pathaoRes.data?.consignment_id ?? null;
-          console.log("[Orders] Pathao order created:", pathaoConsignmentId);
-        } catch (err) {
-          pathaoError = err instanceof Error ? err.message : String(err);
-          console.error("[Orders] Pathao failed:", pathaoError);
-        }
-      }
-    }
 
     const row = {
       orderId,
@@ -183,7 +121,7 @@ export async function POST(request: NextRequest) {
       shipping: shippingCost,
       total,
       status: "New",
-      pathaoConsignmentId: pathaoConsignmentId ?? "",
+      pathaoConsignmentId: "",
     };
 
     const supabase = getSupabaseAdmin();
@@ -206,8 +144,8 @@ export async function POST(request: NextRequest) {
         shipping: shippingCost,
         total,
         status: "new",
-        pathao_consignment_id: pathaoConsignmentId,
-        pathao_error: pathaoError,
+        pathao_consignment_id: null,
+        pathao_error: null,
       })
       .select("id")
       .single();
@@ -260,8 +198,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       orderId,
-      ...(pathaoConsignmentId && { pathaoConsignmentId }),
-      ...(pathaoError && { pathaoError }),
     });
   } catch (error) {
     console.error("Order API error:", error);

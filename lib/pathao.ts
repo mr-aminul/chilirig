@@ -1,6 +1,6 @@
 /**
  * Pathao Courier Merchant API client.
- * Used to create delivery orders in Pathao when a customer places an order.
+ * Used to create delivery orders in Pathao from the admin dispatch flow.
  * @see https://developer.pathao.com (API docs)
  */
 

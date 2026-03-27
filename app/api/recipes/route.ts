@@ -3,6 +3,8 @@ import { Recipe } from "@/data/recipes";
 import { requireAuth } from "@/lib/auth";
 import { getSupabaseAdmin } from "@/lib/supabase-server";
 
+const NO_STORE_HEADERS = { "Cache-Control": "no-store, max-age=0" };
+
 function toRecipe(row: any): Recipe {
   return {
     id: row.id,
@@ -29,11 +31,14 @@ export async function GET() {
       .select("*")
       .order("created_at", { ascending: true });
     if (error) throw error;
-    return NextResponse.json({ success: true, data: (data ?? []).map(toRecipe) });
+    return NextResponse.json(
+      { success: true, data: (data ?? []).map(toRecipe) },
+      { headers: NO_STORE_HEADERS }
+    );
   } catch (error) {
     return NextResponse.json(
       { success: false, error: "Failed to fetch recipes" },
-      { status: 500 }
+      { status: 500, headers: NO_STORE_HEADERS }
     );
   }
 }

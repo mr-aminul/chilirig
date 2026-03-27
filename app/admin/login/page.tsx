@@ -65,6 +65,7 @@ export default function AdminLoginPage() {
                 placeholder="Enter password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
                 className="w-full"
                 autoFocus
                 disabled={loading}

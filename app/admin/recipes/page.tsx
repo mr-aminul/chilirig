@@ -29,7 +29,7 @@ export default function RecipesPage() {
 
   const fetchRecipes = async () => {
     try {
-      const response = await fetch("/api/recipes");
+      const response = await fetch("/api/recipes", { cache: "no-store" });
       const result = await response.json();
       if (result.success) {
         setRecipes(result.data);
