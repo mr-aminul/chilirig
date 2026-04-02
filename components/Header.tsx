@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { ShoppingCart, Menu, X } from "lucide-react";
 import { useCart, useOrders } from "@/lib/store";
@@ -11,7 +12,7 @@ import { getCachedApiJson } from "@/lib/api-cache";
 
 const INACTIVITY_MS = 3000;
 const IDLE_CHECK_INTERVAL_MS = 500;
-const MESSENGER_URL = "https://www.facebook.com/messages/t/61572618660966";
+const MESSENGER_URL = "https://www.facebook.com/profile.php?id=61572618660966";
 
 function MessengerIcon({ className }: { className?: string }) {
   return (
@@ -133,14 +134,16 @@ export function Header() {
               onFocus={() => prefetchRoute("/")}
               onTouchStart={() => prefetchRoute("/")}
               onClick={(e) => goTo(e, "/")}
-              className="flex items-center space-x-2 z-10 group flex-shrink-0"
+              className="relative z-10 flex shrink-0 items-center group"
             >
-              <div className="flex items-center space-x-2">
-                <div className="w-6 h-6 rounded bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(var(--primary-hover))] flex items-center justify-center">
-                  <span className="text-white text-xs font-bold">C</span>
-                </div>
-                <span className="text-sm font-semibold tracking-tight text-black sm:text-lg">ChiliRig</span>
-              </div>
+              <Image
+                src="/images/logo.png"
+                alt="ChiliRig logo: dragon in a jar of red chilies"
+                width={500}
+                height={500}
+                className="h-9 w-9 object-contain sm:h-10 sm:w-10"
+                priority
+              />
             </Link>
 
             {/* Desktop Navigation */}

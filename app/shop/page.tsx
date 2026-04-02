@@ -267,7 +267,7 @@ export default function ShopPage() {
                   <p className="text-gray-600">Loading products...</p>
                 </div>
               ) : filteredProducts.length > 0 ? (
-                <div className="grid grid-cols-2 items-stretch gap-3 [&>*]:min-h-0 [&>*]:h-full [&>*]:min-w-0 sm:gap-6 xl:grid-cols-3">
+                <div className="grid grid-cols-2 items-stretch gap-3 sm:gap-6 sm:[grid-template-columns:repeat(auto-fit,minmax(min(100%,17rem),1fr))] [&>*]:min-h-0 [&>*]:h-full [&>*]:min-w-0">
                   {filteredProducts.map((product) => (
                     <ProductCard key={product.id} product={product} />
                   ))}

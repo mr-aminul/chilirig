@@ -6,7 +6,7 @@ import { SectionContainer } from "@/components/SectionContainer";
 import { Product } from "@/data/products";
 
 const productGridClassName =
-  "grid grid-cols-2 items-stretch gap-2 sm:gap-4 md:gap-4 lg:grid-cols-3 lg:gap-4 xl:grid-cols-4 [&>*]:min-h-0 [&>*]:h-full [&>*]:min-w-0";
+  "grid grid-cols-2 items-stretch gap-2 sm:gap-4 md:gap-4 lg:gap-4 sm:[grid-template-columns:repeat(auto-fit,minmax(min(100%,17rem),1fr))] [&>*]:min-h-0 [&>*]:h-full [&>*]:min-w-0";
 
 interface ProductGridProps {
   products?: Product[];
