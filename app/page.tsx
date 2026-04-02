@@ -86,6 +86,7 @@ function buildCategoryCards(products: Product[]): CategoryCardItem[] {
 export default async function Home() {
   let heroSlides = defaultHeroContent.slides;
   let categories: CategoryCardItem[] = [];
+  let products: Product[] = [];
 
   try {
     const heroContent = await getHeroContent();
@@ -95,7 +96,7 @@ export default async function Home() {
   }
 
   try {
-    const products = await getProducts();
+    products = await getProducts();
     categories = buildCategoryCards(products);
   } catch (error) {
     console.error("Failed to load collection cards:", error);
@@ -109,7 +110,7 @@ export default async function Home() {
         <Hero slides={heroSlides} />
         <ValueProps />
         <CategoryCards categories={categories} />
-        <ProductGrid />
+        <ProductGrid products={products} />
         <HowToEnjoy />
         <FeaturedBanner />
         <RecipeTeaser />

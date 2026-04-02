@@ -1,34 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ProductCard } from "@/components/ProductCard";
 import { SectionContainer } from "@/components/SectionContainer";
 import { Product } from "@/data/products";
-import { getCachedApiJson } from "@/lib/api-cache";
 
-export function ProductGrid() {
+const productGridClassName =
+  "grid grid-cols-2 items-stretch gap-2 sm:gap-4 md:gap-4 lg:grid-cols-3 lg:gap-4 xl:grid-cols-4 [&>*]:min-h-0 [&>*]:h-full [&>*]:min-w-0";
+
+interface ProductGridProps {
+  products?: Product[];
+}
+
+export function ProductGrid({ products = [] }: ProductGridProps) {
   const [activeTab, setActiveTab] = useState("bestsellers");
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const loadProducts = async () => {
-      try {
-        const result = await getCachedApiJson<{ success: boolean; data?: Product[] }>(
-          "/api/products",
-          { ttlMs: 10 * 60 * 1000 }
-        );
-        if (result.success) {
-          setProducts(Array.isArray(result.data) ? result.data : []);
-        }
-      } catch (error) {
-        console.error("Failed to fetch products:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadProducts();
-  }, []);
 
   const bestSellers = products.filter((p) => p.isBestSeller === true);
   const newProducts = products.filter((p) => p.isNew === true);
@@ -70,32 +55,26 @@ export function ProductGrid() {
         </div>
       </div>
 
-      {/* Content */}
-      {loading && (
-        <div className="py-4 text-center text-sm text-[hsl(var(--text-secondary))] md:py-6">
-          Loading products...
-        </div>
-      )}
-      {!loading && activeTab === "bestsellers" && (
-        <div className="grid grid-cols-2 items-stretch gap-2 sm:gap-4 md:gap-4 lg:grid-cols-3 lg:gap-4 xl:grid-cols-4 [&>*]:min-h-0 [&>*]:h-full [&>*]:min-w-0">
+      {activeTab === "bestsellers" && (
+        <div className={productGridClassName}>
           {bestSellers.map((product) => (
-            <ProductCard key={product.id} product={product} compact />
+            <ProductCard key={product.id} product={product} />
           ))}
         </div>
       )}
 
-      {!loading && activeTab === "new" && (
-        <div className="grid grid-cols-2 items-stretch gap-2 sm:gap-4 md:gap-4 lg:grid-cols-3 lg:gap-4 xl:grid-cols-4 [&>*]:min-h-0 [&>*]:h-full [&>*]:min-w-0">
+      {activeTab === "new" && (
+        <div className={productGridClassName}>
           {newProducts.map((product) => (
-            <ProductCard key={product.id} product={product} compact />
+            <ProductCard key={product.id} product={product} />
           ))}
         </div>
       )}
 
-      {!loading && activeTab === "bundles" && (
-        <div className="grid grid-cols-2 items-stretch gap-2 sm:gap-4 md:gap-4 lg:grid-cols-3 lg:gap-4 xl:grid-cols-4 [&>*]:min-h-0 [&>*]:h-full [&>*]:min-w-0">
+      {activeTab === "bundles" && (
+        <div className={productGridClassName}>
           {bundles.map((product) => (
-            <ProductCard key={product.id} product={product} compact />
+            <ProductCard key={product.id} product={product} />
           ))}
         </div>
       )}
