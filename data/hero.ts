@@ -1,3 +1,5 @@
+import { REMOTE_MEDIA_PLACEHOLDER } from "@/lib/remote-media-placeholder";
+
 export interface HeroSlide {
   id: string;
   image: string;
@@ -12,12 +14,12 @@ export const defaultHeroContent: HeroContent = {
   slides: [
     {
       id: "hero-slide-1",
-      image: "/images/hero/fire-flames-on-black-background-free-photo.jpg",
+      image: REMOTE_MEDIA_PLACEHOLDER,
       alt: "ChiliRig hero flames and peppers",
     },
     {
       id: "hero-slide-2",
-      image: "/images/40004f7d-b2f0-4357-953a-fe35253873ce.jpg",
+      image: REMOTE_MEDIA_PLACEHOLDER,
       alt: "Red chili peppers splashing across a fiery background",
     },
   ],

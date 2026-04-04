@@ -8,7 +8,7 @@ import { Footer } from "@/components/Footer";
 import { SectionContainer } from "@/components/SectionContainer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Recipe } from "@/data/recipes";
-import { getCachedApiJson } from "@/lib/api-cache";
+import { fetchApiJson } from "@/lib/fetch-api";
 
 export default function RecipesPage() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
@@ -16,10 +16,7 @@ export default function RecipesPage() {
   useEffect(() => {
     const loadRecipes = async () => {
       try {
-        const result = await getCachedApiJson<{ success: boolean; data?: Recipe[] }>(
-          "/api/recipes",
-          { ttlMs: 10 * 60 * 1000 }
-        );
+        const result = await fetchApiJson<{ success: boolean; data?: Recipe[] }>("/api/recipes");
         if (result.success) {
           setRecipes(result.data ?? []);
         }

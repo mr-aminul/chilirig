@@ -169,7 +169,7 @@ export default function CheckoutPage() {
   };
 
   useEffect(() => {
-    fetch("/api/pathao/cities")
+    fetch("/api/pathao/cities", { cache: "no-store" })
       .then((r) => r.json())
       .then((j) => {
         if (j.success && Array.isArray(j.data)) setCities(j.data);
@@ -190,7 +190,7 @@ export default function CheckoutPage() {
     setAreas([]);
     setShippingPrice(null);
     setFormData((prev) => ({ ...prev, zoneId: "", zoneName: "", areaId: "", areaName: "" }));
-    fetch(`/api/pathao/zones?city_id=${encodeURIComponent(cityId)}`)
+    fetch(`/api/pathao/zones?city_id=${encodeURIComponent(cityId)}`, { cache: "no-store" })
       .then((r) => r.json())
       .then((j) => {
         if (j.success && Array.isArray(j.data)) setZones(j.data);
@@ -209,7 +209,7 @@ export default function CheckoutPage() {
     setAreas([]);
     setShippingPrice(null);
     setFormData((prev) => ({ ...prev, areaId: "", areaName: "" }));
-    fetch(`/api/pathao/areas?zone_id=${encodeURIComponent(zoneId)}`)
+    fetch(`/api/pathao/areas?zone_id=${encodeURIComponent(zoneId)}`, { cache: "no-store" })
       .then((r) => r.json())
       .then((j) => {
         if (j.success && Array.isArray(j.data)) setAreas(j.data);
@@ -230,6 +230,7 @@ export default function CheckoutPage() {
       setShippingPriceError(null);
       fetch("/api/pathao/price", {
         method: "POST",
+        cache: "no-store",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           city_id: Number(cityId),
@@ -321,6 +322,7 @@ export default function CheckoutPage() {
     try {
       const res = await fetch("/api/orders", {
         method: "POST",
+        cache: "no-store",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });

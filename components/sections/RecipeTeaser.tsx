@@ -7,7 +7,7 @@ import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { SectionContainer } from "@/components/SectionContainer";
 import { Recipe } from "@/data/recipes";
-import { getCachedApiJson } from "@/lib/api-cache";
+import { fetchApiJson } from "@/lib/fetch-api";
 
 export function RecipeTeaser() {
   const [featuredRecipes, setFeaturedRecipes] = useState<Recipe[]>([]);
@@ -15,10 +15,7 @@ export function RecipeTeaser() {
   useEffect(() => {
     const loadRecipes = async () => {
       try {
-        const result = await getCachedApiJson<{ success: boolean; data?: Recipe[] }>(
-          "/api/recipes",
-          { ttlMs: 10 * 60 * 1000 }
-        );
+        const result = await fetchApiJson<{ success: boolean; data?: Recipe[] }>("/api/recipes");
         if (result.success) {
           setFeaturedRecipes((result.data ?? []).slice(0, 3));
         }

@@ -6,7 +6,7 @@ import { Star } from "lucide-react";
 import { ReviewCard } from "@/components/ReviewCard";
 import { SectionContainer } from "@/components/SectionContainer";
 import { Review } from "@/data/reviews";
-import { getCachedApiJson } from "@/lib/api-cache";
+import { fetchApiJson } from "@/lib/fetch-api";
 
 export function SocialProof() {
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -14,10 +14,7 @@ export function SocialProof() {
   useEffect(() => {
     const loadReviews = async () => {
       try {
-        const result = await getCachedApiJson<{ success: boolean; data?: Review[] }>(
-          "/api/reviews",
-          { ttlMs: 10 * 60 * 1000 }
-        );
+        const result = await fetchApiJson<{ success: boolean; data?: Review[] }>("/api/reviews");
         if (result.success) {
           setReviews(result.data ?? []);
         }

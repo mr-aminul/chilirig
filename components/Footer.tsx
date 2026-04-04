@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { REMOTE_MEDIA_PLACEHOLDER } from "@/lib/remote-media-placeholder";
 
 const iconClass = "h-5 w-5";
 
@@ -63,7 +64,7 @@ export function Footer() {
     <footer className="relative overflow-hidden border-t border-white/15">
       <div className="pointer-events-none absolute inset-0" aria-hidden>
         <Image
-          src="/images/giphy.gif"
+          src={REMOTE_MEDIA_PLACEHOLDER}
           alt=""
           fill
           unoptimized

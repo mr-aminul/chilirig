@@ -1,74 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
-import { StoryContent } from "@/data/story";
 import { requireAuth } from "@/lib/auth";
+import { getStoryContent } from "@/lib/story-content";
 import { getSupabaseAdmin } from "@/lib/supabase-server";
 
+export const dynamic = "force-dynamic";
+
 const NO_STORE_HEADERS = { "Cache-Control": "no-store, max-age=0" };
-
-async function loadStory(): Promise<StoryContent | null> {
-  const supabase = getSupabaseAdmin();
-  const { data: page, error: pageError } = await supabase
-    .from("story_pages")
-    .select("*")
-    .eq("slug", "our-story")
-    .single();
-  if (pageError) throw pageError;
-
-  const { data: sections, error: sectionsError } = await supabase
-    .from("story_sections")
-    .select("*")
-    .eq("page_id", page.id)
-    .order("sort_order", { ascending: true });
-  if (sectionsError) throw sectionsError;
-
-  const sectionIds = (sections ?? []).map((s) => s.id);
-  let promises: any[] = [];
-  if (sectionIds.length > 0) {
-    const { data, error } = await supabase
-      .from("story_promises")
-      .select("*")
-      .in("section_id", sectionIds)
-      .order("sort_order", { ascending: true });
-    if (error) throw error;
-    promises = data ?? [];
-  }
-
-  const promisesMap = new Map<string, any[]>();
-  for (const promise of promises) {
-    const list = promisesMap.get(promise.section_id) ?? [];
-    list.push({
-      id: promise.id,
-      title: promise.title,
-      description: promise.description,
-    });
-    promisesMap.set(promise.section_id, list);
-  }
-
-  return {
-    id: page.id,
-    pageTitle: page.page_title,
-    pageSubtitle: page.page_subtitle,
-    sections: (sections ?? []).map((section, index) => ({
-      id: section.id,
-      type: section.section_type,
-      title: section.title ?? undefined,
-      subtitle: section.subtitle ?? undefined,
-      description: section.description ?? undefined,
-      image: section.image ?? undefined,
-      imageAlt: section.image_alt ?? undefined,
-      imagePosition: section.image_position ?? undefined,
-      promises: promisesMap.get(section.id) ?? undefined,
-      ctaText: section.cta_text ?? undefined,
-      ctaLink: section.cta_link ?? undefined,
-      order: section.sort_order ?? index + 1,
-    })),
-  };
-}
 
 // GET - Fetch story content
 export async function GET() {
   try {
-    const story = await loadStory();
+    const story = await getStoryContent();
+    if (!story) {
+      return NextResponse.json(
+        { success: false, error: "Failed to fetch story content" },
+        { status: 500, headers: NO_STORE_HEADERS }
+      );
+    }
     return NextResponse.json({ success: true, data: story }, { headers: NO_STORE_HEADERS });
   } catch (error) {
     return NextResponse.json(
@@ -147,12 +95,21 @@ export async function PUT(request: NextRequest) {
       }
     }
 
-    const updated = await loadStory();
-    return NextResponse.json({ success: true, data: updated });
+    const updated = await getStoryContent();
+    if (!updated) {
+      return NextResponse.json(
+        { success: false, error: "Failed to load story after update" },
+        { status: 500, headers: NO_STORE_HEADERS }
+      );
+    }
+    return NextResponse.json(
+      { success: true, data: updated },
+      { headers: NO_STORE_HEADERS }
+    );
   } catch (error) {
     return NextResponse.json(
       { success: false, error: "Failed to update story content" },
-      { status: 500 }
+      { status: 500, headers: NO_STORE_HEADERS }
     );
   }
 }

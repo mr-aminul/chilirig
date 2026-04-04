@@ -179,6 +179,7 @@ export async function POST(request: NextRequest) {
     if (scriptUrl) {
       const res = await fetch(scriptUrl, {
         method: "POST",
+        cache: "no-store",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(row),
       });

@@ -103,6 +103,7 @@ export async function getPathaoAccessToken(): Promise<string> {
 
   const res = await fetch(`${base}${TOKEN_PATH}`, {
     method: "POST",
+    cache: "no-store",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       client_id,
@@ -149,6 +150,7 @@ export async function createPathaoOrder(
 
   const res = await fetch(`${base}${ORDERS_PATH}`, {
     method: "POST",
+    cache: "no-store",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
@@ -184,6 +186,7 @@ async function pathaoGet<T>(path: string): Promise<T> {
   const token = await getPathaoAccessToken();
   const res = await fetch(`${base}${path}`, {
     method: "GET",
+    cache: "no-store",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
@@ -253,6 +256,7 @@ export async function getPathaoPrice(
 
   const res = await fetch(`${base}/aladdin/api/v1/merchant/price-plan`, {
     method: "POST",
+    cache: "no-store",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,

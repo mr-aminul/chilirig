@@ -39,16 +39,19 @@ export async function PUT(request: NextRequest) {
     if (!parsed.success) {
       return NextResponse.json(
         { success: false, error: "Invalid hero payload" },
-        { status: 400 }
+        { status: 400, headers: NO_STORE_HEADERS }
       );
     }
 
     const hero = await saveHeroContent(parsed.data);
-    return NextResponse.json({ success: true, data: hero });
+    return NextResponse.json(
+      { success: true, data: hero },
+      { headers: NO_STORE_HEADERS }
+    );
   } catch {
     return NextResponse.json(
       { success: false, error: "Failed to update hero content" },
-      { status: 500 }
+      { status: 500, headers: NO_STORE_HEADERS }
     );
   }
 }

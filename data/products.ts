@@ -1,3 +1,5 @@
+import { REMOTE_MEDIA_PLACEHOLDER } from "@/lib/remote-media-placeholder";
+
 export type HeatLevel = 1 | 2 | 3 | 4 | 5;
 
 export interface Product {
@@ -33,11 +35,11 @@ export const products: Product[] = [
     description:
       "Our signature blend of slow-infused chilies, garlic, and premium oils. Bold flavor with balanced heat.",
     price: 18.99,
-    image: "/images/products/product-1.png",
+    image: REMOTE_MEDIA_PLACEHOLDER,
     images: [
-      "/images/products/product-1.png",
-      "/images/products/product-1.png",
-      "/images/products/product-1.png",
+      REMOTE_MEDIA_PLACEHOLDER,
+      REMOTE_MEDIA_PLACEHOLDER,
+      REMOTE_MEDIA_PLACEHOLDER,
     ],
     heatLevel: 3,
     category: "original",
@@ -68,11 +70,11 @@ export const products: Product[] = [
     description:
       "Rich, umami-packed chili oil made with real beef. Not for the faint of taste. This one bites back.",
     price: 24.99,
-    image: "/images/products/product-2.png",
+    image: REMOTE_MEDIA_PLACEHOLDER,
     images: [
-      "/images/products/product-2.png",
-      "/images/products/product-2.png",
-      "/images/products/product-2.png",
+      REMOTE_MEDIA_PLACEHOLDER,
+      REMOTE_MEDIA_PLACEHOLDER,
+      REMOTE_MEDIA_PLACEHOLDER,
     ],
     heatLevel: 4,
     category: "beef",
@@ -104,11 +106,11 @@ export const products: Product[] = [
     description:
       "For heat seekers. Intense spice with complex flavor. Use sparingly.",
     price: 19.99,
-    image: "/images/products/product-3.png",
+    image: REMOTE_MEDIA_PLACEHOLDER,
     images: [
-      "/images/products/product-3.png",
-      "/images/products/product-3.png",
-      "/images/products/product-3.png",
+      REMOTE_MEDIA_PLACEHOLDER,
+      REMOTE_MEDIA_PLACEHOLDER,
+      REMOTE_MEDIA_PLACEHOLDER,
     ],
     heatLevel: 5,
     category: "original",
@@ -133,11 +135,11 @@ export const products: Product[] = [
     description:
       "Gentle heat, maximum flavor. Perfect for those who want flavor without the fire.",
     price: 18.99,
-    image: "/images/products/product-4.png",
+    image: REMOTE_MEDIA_PLACEHOLDER,
     images: [
-      "/images/products/product-4.png",
-      "/images/products/product-4.png",
-      "/images/products/product-4.png",
+      REMOTE_MEDIA_PLACEHOLDER,
+      REMOTE_MEDIA_PLACEHOLDER,
+      REMOTE_MEDIA_PLACEHOLDER,
     ],
     heatLevel: 1,
     category: "original",
@@ -163,11 +165,11 @@ export const products: Product[] = [
       "The perfect gift for spice enthusiasts. Includes Original, Beef, and Extra Hot varieties.",
     price: 59.99,
     originalPrice: 64.97,
-    image: "/images/products/product-5.png",
+    image: REMOTE_MEDIA_PLACEHOLDER,
     images: [
-      "/images/products/product-5.png",
-      "/images/products/product-5.png",
-      "/images/products/product-5.png",
+      REMOTE_MEDIA_PLACEHOLDER,
+      REMOTE_MEDIA_PLACEHOLDER,
+      REMOTE_MEDIA_PLACEHOLDER,
     ],
     heatLevel: 4,
     category: "gift-set",
@@ -186,11 +188,11 @@ export const products: Product[] = [
       "A curated introduction to ChiliRig. Includes Original and Mild varieties with recipe cards.",
     price: 34.99,
     originalPrice: 37.98,
-    image: "/images/products/product-6.png",
+    image: REMOTE_MEDIA_PLACEHOLDER,
     images: [
-      "/images/products/product-6.png",
-      "/images/products/product-6.png",
-      "/images/products/product-6.png",
+      REMOTE_MEDIA_PLACEHOLDER,
+      REMOTE_MEDIA_PLACEHOLDER,
+      REMOTE_MEDIA_PLACEHOLDER,
     ],
     heatLevel: 2,
     category: "gift-set",

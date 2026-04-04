@@ -20,7 +20,7 @@ import { Product } from "@/data/products";
 import { formatPrice } from "@/lib/utils";
 import { useCart } from "@/lib/store";
 import { ShoppingCart, Minus, Plus } from "lucide-react";
-import { getCachedApiJson } from "@/lib/api-cache";
+import { fetchApiJson } from "@/lib/fetch-api";
 export default function ProductPage() {
   const params = useParams<{ slug: string }>();
   const slug = params?.slug;
@@ -36,13 +36,10 @@ export default function ProductPage() {
     const loadProducts = async () => {
       try {
         const [single, all] = await Promise.all([
-          getCachedApiJson<{ success: boolean; data?: Product }>(
-            `/api/products?slug=${encodeURIComponent(slug || "")}`,
-            { ttlMs: 10 * 60 * 1000, cacheKey: `/api/products?slug=${slug}` }
+          fetchApiJson<{ success: boolean; data?: Product }>(
+            `/api/products?slug=${encodeURIComponent(slug || "")}`
           ),
-          getCachedApiJson<{ success: boolean; data?: Product[] }>("/api/products", {
-            ttlMs: 10 * 60 * 1000,
-          }),
+          fetchApiJson<{ success: boolean; data?: Product[] }>("/api/products"),
         ]);
         if (single.success && single.data) {
           setProduct(single.data);

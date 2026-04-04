@@ -15,8 +15,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import HeroSlideForm from "@/components/admin/HeroSlideForm";
 import { HeroContent, HeroSlide } from "@/data/hero";
-import { invalidateApiCache } from "@/lib/api-cache";
-
 export default function HeroAdminPage() {
   const [heroContent, setHeroContent] = useState<HeroContent | null>(null);
   const [loading, setLoading] = useState(true);
@@ -48,6 +46,7 @@ export default function HeroAdminPage() {
     try {
       const response = await fetch("/api/hero", {
         method: "PUT",
+        cache: "no-store",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ slides }),
       });
@@ -55,7 +54,6 @@ export default function HeroAdminPage() {
 
       if (result.success) {
         setHeroContent(result.data);
-        invalidateApiCache("/api/hero");
       } else {
         alert(`Failed to save hero content: ${result.error}`);
       }

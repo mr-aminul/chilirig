@@ -3,6 +3,10 @@ import { Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import { PageTransitionLoader } from "@/components/PageTransitionLoader";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
+
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-sans",

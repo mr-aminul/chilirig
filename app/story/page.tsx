@@ -1,15 +1,12 @@
-"use client";
-
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { SectionContainer } from "@/components/SectionContainer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { StoryContent, StorySection } from "@/data/story";
-import { getCachedApiJson } from "@/lib/api-cache";
+import { StorySection } from "@/data/story";
+import { getStoryContent } from "@/lib/story-content";
 import { Leaf, Package, Timer, type LucideIcon } from "lucide-react";
 
 const PROMISE_ICONS: LucideIcon[] = [Leaf, Timer, Package];
@@ -151,25 +148,8 @@ function renderSection(section: StorySection) {
   }
 }
 
-export default function StoryPage() {
-  const [story, setStory] = useState<StoryContent | null>(null);
-
-  useEffect(() => {
-    const loadStory = async () => {
-      try {
-        const result = await getCachedApiJson<{ success: boolean; data?: StoryContent }>(
-          "/api/story",
-          { ttlMs: 10 * 60 * 1000 }
-        );
-        if (result.success) {
-          setStory(result.data ?? null);
-        }
-      } catch (error) {
-        console.error("Failed to fetch story:", error);
-      }
-    };
-    loadStory();
-  }, []);
+export default async function StoryPage() {
+  const story = await getStoryContent();
 
   if (!story) {
     return (
@@ -177,7 +157,9 @@ export default function StoryPage() {
         <Header />
         <main>
           <SectionContainer>
-            <p className="text-[hsl(var(--text-secondary))]">Loading story...</p>
+            <p className="text-[hsl(var(--text-secondary))]">
+              We couldn&apos;t load this page right now. Please try again in a moment.
+            </p>
           </SectionContainer>
         </main>
         <Footer />
@@ -208,4 +190,3 @@ export default function StoryPage() {
     </>
   );
 }
-

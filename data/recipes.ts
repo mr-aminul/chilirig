@@ -1,3 +1,5 @@
+import { REMOTE_MEDIA_PLACEHOLDER } from "@/lib/remote-media-placeholder";
+
 export interface Recipe {
   id: string;
   title: string;
@@ -26,7 +28,7 @@ export const recipes: Recipe[] = [
     slug: "garlic-chili-noodles",
     description:
       "Quick, bold, and addictive. These noodles come together in minutes but pack a serious flavor punch.",
-    image: "/images/recipes/recipe-garlic-chili-noodles.png",
+    image: REMOTE_MEDIA_PLACEHOLDER,
     prepTime: "5 min",
     cookTime: "10 min",
     servings: 2,
@@ -74,7 +76,7 @@ export const recipes: Recipe[] = [
     slug: "crispy-egg-rice-bowl",
     description:
       "A simple, satisfying bowl that's perfect for breakfast, lunch, or dinner. The crispy egg is everything.",
-    image: "/images/recipes/recipe-crispy-egg-rice-bowl.png",
+    image: REMOTE_MEDIA_PLACEHOLDER,
     prepTime: "5 min",
     cookTime: "10 min",
     servings: 1,
@@ -121,7 +123,7 @@ export const recipes: Recipe[] = [
     slug: "spicy-beef-toast",
     description:
       "Elevate your toast game with our Beef Chili Oil. Rich, umami, and absolutely addictive.",
-    image: "/images/recipes/recipe-spicy-beef-toast.png",
+    image: REMOTE_MEDIA_PLACEHOLDER,
     prepTime: "5 min",
     cookTime: "5 min",
     servings: 2,
@@ -167,7 +169,7 @@ export const recipes: Recipe[] = [
     slug: "chili-oil-dumplings",
     description:
       "Classic dumplings elevated with our signature chili oil. A crowd-pleaser every time.",
-    image: "/images/recipes/recipe-chili-oil-dumplings.png",
+    image: REMOTE_MEDIA_PLACEHOLDER,
     prepTime: "10 min",
     cookTime: "15 min",
     servings: 4,
@@ -209,7 +211,7 @@ export const recipes: Recipe[] = [
     slug: "chili-oil-pasta",
     description:
       "Italian meets Asian in this fusion favorite. Simple ingredients, maximum flavor.",
-    image: "/images/recipes/recipe-chili-oil-pasta.png",
+    image: REMOTE_MEDIA_PLACEHOLDER,
     prepTime: "5 min",
     cookTime: "12 min",
     servings: 2,

@@ -7,8 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Product } from "@/data/products";
 import { generateSlug, normalizeImageUrl } from "@/lib/utils";
-import { invalidateApiCache } from "@/lib/api-cache";
-
 interface ProductFormProps {
   product?: Product | null;
   onClose: () => void;
@@ -115,13 +113,13 @@ export default function ProductForm({ product, onClose }: ProductFormProps) {
 
       const response = await fetch(url, {
         method,
+        cache: "no-store",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
       const result = await response.json();
       if (result.success) {
-        invalidateApiCache("/api/products");
         onClose();
       } else {
         alert("Failed to save product: " + result.error);
@@ -281,7 +279,7 @@ export default function ProductForm({ product, onClose }: ProductFormProps) {
               <Input
                 value={formData.image}
                 onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                placeholder="/images/products/product-1.png"
+                placeholder="https://placehold.co/800x600/png?text=Product+image+URL"
                 required
               />
             </div>
@@ -291,7 +289,7 @@ export default function ProductForm({ product, onClose }: ProductFormProps) {
               <Input
                 value={formData.images}
                 onChange={(e) => setFormData({ ...formData, images: e.target.value })}
-                placeholder="/images/products/product-1.png, /images/products/product-1-alt.png"
+                placeholder="https://example.com/a.jpg, https://example.com/b.jpg"
               />
             </div>
 

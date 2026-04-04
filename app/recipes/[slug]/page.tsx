@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Recipe } from "@/data/recipes";
 import { Clock, Users } from "lucide-react";
 import { useParams } from "next/navigation";
-import { getCachedApiJson } from "@/lib/api-cache";
+import { fetchApiJson } from "@/lib/fetch-api";
 export default function RecipePage() {
   const params = useParams<{ slug: string }>();
   const slug = params?.slug;
@@ -23,10 +23,7 @@ export default function RecipePage() {
   useEffect(() => {
     const loadRecipes = async () => {
       try {
-        const result = await getCachedApiJson<{ success: boolean; data?: Recipe[] }>(
-          "/api/recipes",
-          { ttlMs: 10 * 60 * 1000 }
-        );
+        const result = await fetchApiJson<{ success: boolean; data?: Recipe[] }>("/api/recipes");
         if (result.success) {
           setRecipes(result.data ?? []);
         }

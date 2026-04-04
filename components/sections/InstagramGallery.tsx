@@ -3,10 +3,11 @@
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { SectionContainer } from "@/components/SectionContainer";
+import { REMOTE_MEDIA_PLACEHOLDER } from "@/lib/remote-media-placeholder";
 
 const instagramImages = Array.from({ length: 6 }, (_, i) => ({
   id: i + 1,
-  src: `/images/instagram/instagram-${i + 1}.png`,
+  src: REMOTE_MEDIA_PLACEHOLDER,
   alt: `ChiliRig Instagram post ${i + 1}`,
 }));
 

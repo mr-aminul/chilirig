@@ -43,7 +43,7 @@ async function fetchResolvedImage(url: URL, attemptsLeft = 2): Promise<Response>
     headers: {
       "User-Agent": "Mozilla/5.0",
     },
-    cache: "force-cache",
+    cache: "no-store",
   });
 
   if (!response.ok) {
@@ -117,7 +117,7 @@ export async function GET(request: NextRequest) {
     return new NextResponse(imageBuffer, {
       headers: {
         "Content-Type": contentType,
-        "Cache-Control": "public, max-age=86400, s-maxage=86400",
+        "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
       },
     });
   } catch {

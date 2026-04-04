@@ -253,7 +253,7 @@ export default function RecipeForm({ recipe, onClose }: RecipeFormProps) {
               <Input
                 value={formData.image}
                 onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                placeholder="/images/recipes/recipe-name.png"
+                placeholder="https://placehold.co/800x600/png?text=Recipe+image+URL"
                 required
               />
             </div>

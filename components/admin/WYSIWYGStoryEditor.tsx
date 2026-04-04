@@ -257,7 +257,7 @@ export default function WYSIWYGStoryEditor({ story, onSave, onPreview }: WYSIWYG
                         return { ...prev, sections: updatedSections };
                       });
                     }}
-                    placeholder="/images/hero/image.png"
+                    placeholder="https://placehold.co/1200x800/png?text=Image+URL"
                   />
                 </div>
                 <div>

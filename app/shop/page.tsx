@@ -8,7 +8,7 @@ import { SectionContainer } from "@/components/SectionContainer";
 import { Input } from "@/components/ui/input";
 import { Product } from "@/data/products";
 import { Search, Filter, ChevronDown } from "lucide-react";
-import { getCachedApiJson } from "@/lib/api-cache";
+import { fetchApiJson } from "@/lib/fetch-api";
 import { cn } from "@/lib/utils";
 
 export default function ShopPage() {
@@ -51,10 +51,7 @@ export default function ShopPage() {
   useEffect(() => {
     const loadProducts = async () => {
       try {
-        const result = await getCachedApiJson<{ success: boolean; data?: Product[] }>(
-          "/api/products",
-          { ttlMs: 10 * 60 * 1000 }
-        );
+        const result = await fetchApiJson<{ success: boolean; data?: Product[] }>("/api/products");
         if (result.success) {
           setProducts(Array.isArray(result.data) ? result.data : []);
         }

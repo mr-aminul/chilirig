@@ -5,6 +5,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { SectionContainer } from "@/components/SectionContainer";
+import { REMOTE_MEDIA_PLACEHOLDER } from "@/lib/remote-media-placeholder";
 
 export function FeaturedBanner() {
   return (
@@ -47,7 +48,7 @@ export function FeaturedBanner() {
         >
           <div className="relative h-full w-full rounded-2xl overflow-hidden bg-gray-100 border border-black/10 shadow-2xl">
             <Image
-              src="/images/hero/hero-craftsmanship.png"
+              src={REMOTE_MEDIA_PLACEHOLDER}
               alt="ChiliRig craftsmanship"
               fill
               className="object-cover"

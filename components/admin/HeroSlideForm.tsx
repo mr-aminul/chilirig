@@ -58,7 +58,7 @@ export default function HeroSlideForm({ slide, onClose, onSave }: HeroSlideFormP
               <Input
                 value={formData.image}
                 onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                placeholder="/images/hero/fire-flames-on-black-background-free-photo.jpg"
+                placeholder="https://placehold.co/1920x1080/png?text=Hero+slide+URL"
                 required
               />
             </div>

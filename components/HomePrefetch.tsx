@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { getCachedApiJson } from "@/lib/api-cache";
+import { fetchApiJson } from "@/lib/fetch-api";
 
 type Product = { slug: string };
 type Recipe = { slug: string };
@@ -15,28 +15,18 @@ export function HomePrefetch() {
 
     const runPrefetch = async () => {
       try {
-        // Warm static route bundles.
         router.prefetch("/shop");
         router.prefetch("/recipes");
         router.prefetch("/story");
         router.prefetch("/faq");
 
-        // Warm API caches used by target pages.
         const [productsRes, recipesRes] = await Promise.all([
-          getCachedApiJson<{ success: boolean; data?: Product[] }>("/api/products", {
-            ttlMs: 10 * 60 * 1000,
-          }),
-          getCachedApiJson<{ success: boolean; data?: Recipe[] }>("/api/recipes", {
-            ttlMs: 10 * 60 * 1000,
-          }),
-          getCachedApiJson("/api/story", { ttlMs: 10 * 60 * 1000 }),
-          getCachedApiJson("/api/faq", { ttlMs: 10 * 60 * 1000 }),
-          getCachedApiJson("/api/reviews", { ttlMs: 10 * 60 * 1000 }),
+          fetchApiJson<{ success: boolean; data?: Product[] }>("/api/products"),
+          fetchApiJson<{ success: boolean; data?: Recipe[] }>("/api/recipes"),
         ]);
 
         if (cancelled) return;
 
-        // Prefetch a few detail pages likely to be visited next.
         for (const product of (productsRes.data ?? []).slice(0, 6)) {
           router.prefetch(`/shop/${product.slug}`);
         }
@@ -57,4 +47,3 @@ export function HomePrefetch() {
 
   return null;
 }
-

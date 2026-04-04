@@ -303,7 +303,7 @@ export default function StoryCanvas({ story, onSave, onPreview }: StoryCanvasPro
             type="text"
             value={value || ""}
             onChange={(e) => updateField(sectionId, field, e.target.value)}
-            placeholder="/images/hero/image.png"
+            placeholder="https://placehold.co/1200x800/png?text=Image+URL"
             className="w-full rounded-lg border border-black/10 bg-white px-4 py-2 text-sm mb-2"
             autoFocus
           />

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { usePathname, useRouter } from "next/navigation";
-import { getCachedApiJson } from "@/lib/api-cache";
+import { REMOTE_MEDIA_PLACEHOLDER } from "@/lib/remote-media-placeholder";
 
 const INACTIVITY_MS = 3000;
 const IDLE_CHECK_INTERVAL_MS = 500;
@@ -101,14 +101,6 @@ export function Header() {
         router.prefetch("/story");
         router.prefetch("/faq");
 
-        // Warm data for major public pages
-        await Promise.allSettled([
-          getCachedApiJson("/api/products", { ttlMs: 10 * 60 * 1000 }),
-          getCachedApiJson("/api/recipes", { ttlMs: 10 * 60 * 1000 }),
-          getCachedApiJson("/api/story", { ttlMs: 10 * 60 * 1000 }),
-          getCachedApiJson("/api/faq", { ttlMs: 10 * 60 * 1000 }),
-          getCachedApiJson("/api/reviews", { ttlMs: 10 * 60 * 1000 }),
-        ]);
       } catch {
         // best-effort optimization only
       }
@@ -137,7 +129,7 @@ export function Header() {
               className="relative z-10 flex shrink-0 items-center group"
             >
               <Image
-                src="/images/logo.png"
+                src={REMOTE_MEDIA_PLACEHOLDER}
                 alt="ChiliRig logo: dragon in a jar of red chilies"
                 width={500}
                 height={500}

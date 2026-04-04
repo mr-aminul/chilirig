@@ -19,7 +19,7 @@ import {
   Flame,
 } from "lucide-react";
 import { FAQCategory } from "@/data/faq";
-import { getCachedApiJson } from "@/lib/api-cache";
+import { fetchApiJson } from "@/lib/fetch-api";
 
 export default function FAQPage() {
   const [faqs, setFaqs] = useState<FAQCategory[]>([]);
@@ -36,10 +36,7 @@ export default function FAQPage() {
   useEffect(() => {
     const loadFaqs = async () => {
       try {
-        const result = await getCachedApiJson<{ success: boolean; data?: FAQCategory[] }>(
-          "/api/faq",
-          { ttlMs: 10 * 60 * 1000 }
-        );
+        const result = await fetchApiJson<{ success: boolean; data?: FAQCategory[] }>("/api/faq");
         if (result.success) {
           setFaqs(result.data ?? []);
         }
