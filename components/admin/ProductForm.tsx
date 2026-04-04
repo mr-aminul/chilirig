@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Product } from "@/data/products";
-import { generateSlug, normalizeImageUrl } from "@/lib/utils";
+import { canonicalImageUrlForStorage, generateSlug } from "@/lib/utils";
 interface ProductFormProps {
   product?: Product | null;
   onClose: () => void;
@@ -70,10 +70,10 @@ export default function ProductForm({ product, onClose }: ProductFormProps) {
     setLoading(true);
 
     try {
-      const image = normalizeImageUrl(formData.image);
+      const image = canonicalImageUrlForStorage(formData.image.trim());
       const images = (
         formData.images
-          ? formData.images.split(",").map((img) => normalizeImageUrl(img))
+          ? formData.images.split(",").map((img) => canonicalImageUrlForStorage(img.trim()))
           : [image]
       ).filter(Boolean);
 

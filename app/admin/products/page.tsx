@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Product } from "@/data/products";
 import ProductForm from "@/components/admin/ProductForm";
+import { imageSrcForNext } from "@/lib/media-url";
 import { formatPrice } from "@/lib/utils";
 
 export default function ProductsPage() {
@@ -139,7 +140,11 @@ export default function ProductsPage() {
               <Card key={product.id} className="overflow-hidden">
                 <div className="relative h-48 bg-muted">
                   <img
-                    src={product.image || product.images?.[0] || "/api/placeholder/600/600"}
+                    src={
+                      product.image || product.images?.[0]
+                        ? imageSrcForNext(product.image || product.images![0])
+                        : "/api/placeholder/600/600"
+                    }
                     alt={product.name}
                     className="w-full h-full object-cover"
                     onError={(e) => {

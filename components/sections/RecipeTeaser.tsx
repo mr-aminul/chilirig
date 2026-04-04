@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { SectionContainer } from "@/components/SectionContainer";
 import { Recipe } from "@/data/recipes";
 import { fetchApiJson } from "@/lib/fetch-api";
+import { imageSrcForNext } from "@/lib/media-url";
 
 export function RecipeTeaser() {
   const [featuredRecipes, setFeaturedRecipes] = useState<Recipe[]>([]);
@@ -49,7 +50,7 @@ export function RecipeTeaser() {
               <Card className="group h-full overflow-hidden transition-all hover:shadow-xl hover:shadow-black/10">
                 <div className="relative h-48 overflow-hidden bg-gray-100 border-b border-black/10">
                   <Image
-                    src={recipe.image}
+                    src={imageSrcForNext(recipe.image)}
                     alt={recipe.title}
                     fill
                     className="object-cover transition-transform duration-300 group-hover:scale-110"

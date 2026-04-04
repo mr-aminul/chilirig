@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { usePathname, useRouter } from "next/navigation";
+import { imageSrcForNext } from "@/lib/media-url";
 import { REMOTE_MEDIA_PLACEHOLDER } from "@/lib/remote-media-placeholder";
 
 const INACTIVITY_MS = 3000;
@@ -129,7 +130,7 @@ export function Header() {
               className="relative z-10 flex shrink-0 items-center group"
             >
               <Image
-                src={REMOTE_MEDIA_PLACEHOLDER}
+                src={imageSrcForNext(REMOTE_MEDIA_PLACEHOLDER)}
                 alt="ChiliRig logo: dragon in a jar of red chilies"
                 width={500}
                 height={500}

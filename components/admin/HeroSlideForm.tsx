@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { HeroSlide } from "@/data/hero";
-import { normalizeImageUrl } from "@/lib/utils";
+import { imageSrcForNext } from "@/lib/media-url";
+import { canonicalImageUrlForStorage } from "@/lib/utils";
 
 interface HeroSlideFormProps {
   slide?: HeroSlide | null;
@@ -32,7 +33,7 @@ export default function HeroSlideForm({ slide, onClose, onSave }: HeroSlideFormP
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const image = normalizeImageUrl(formData.image.trim());
+    const image = canonicalImageUrlForStorage(formData.image.trim());
     const alt = formData.alt.trim();
 
     onSave({
@@ -78,7 +79,7 @@ export default function HeroSlideForm({ slide, onClose, onSave }: HeroSlideFormP
                 <p className="mb-2 text-sm font-medium">Preview</p>
                 <div className="overflow-hidden rounded-lg border border-black/10 bg-muted">
                   <img
-                    src={formData.image}
+                    src={imageSrcForNext(formData.image)}
                     alt={formData.alt || "Hero slide preview"}
                     className="h-56 w-full object-cover"
                     onError={(e) => {

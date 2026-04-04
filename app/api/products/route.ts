@@ -3,7 +3,7 @@ import { z } from "zod";
 import { HeatLevel, Product } from "@/data/products";
 import { requireAuth } from "@/lib/auth";
 import { getProductBySlug, getProducts } from "@/lib/products-db";
-import { generateSlug, normalizeImageUrl } from "@/lib/utils";
+import { canonicalImageUrlForStorage, generateSlug } from "@/lib/utils";
 import { getSupabaseAdmin } from "@/lib/supabase-server";
 
 const NO_STORE_HEADERS = { "Cache-Control": "no-store, max-age=0" };
@@ -67,10 +67,10 @@ export async function POST(request: NextRequest) {
     }
     const body = parsed.data;
     const parsedHeatLevel = parseInt(String(body.heatLevel), 10);
-    const image = normalizeImageUrl(body.image);
+    const image = canonicalImageUrlForStorage(String(body.image).trim());
     const images: string[] =
       (body.images && body.images.length > 0 ? body.images : [body.image])
-        .map((item: string) => normalizeImageUrl(item))
+        .map((item: string) => canonicalImageUrlForStorage(String(item).trim()))
         .filter((item: string) => Boolean(item));
     const galleryImages = [image, ...images.filter((item: string) => item !== image)];
     let heatLevel: HeatLevel = 3;
@@ -139,18 +139,18 @@ export async function PUT(request: NextRequest) {
 
     const parsedHeatLevel =
       updates.heatLevel != null ? parseInt(String(updates.heatLevel), 10) : null;
-    const normalizedImage =
-      updates.image != null ? normalizeImageUrl(updates.image) : null;
-    const normalizedImages =
+    const storedImage =
+      updates.image != null ? canonicalImageUrlForStorage(String(updates.image).trim()) : null;
+    const storedImages =
       updates.images != null
         ? updates.images
-            .map((item: string) => normalizeImageUrl(item))
+            .map((item: string) => canonicalImageUrlForStorage(String(item).trim()))
             .filter((item: string) => Boolean(item))
         : null;
     const galleryImages =
-      normalizedImages != null && normalizedImage != null
-        ? [normalizedImage, ...normalizedImages.filter((item: string) => item !== normalizedImage)]
-        : normalizedImages;
+      storedImages != null && storedImage != null
+        ? [storedImage, ...storedImages.filter((item: string) => item !== storedImage)]
+        : storedImages;
     const updatePayload: Record<string, any> = {
       ...(updates.name != null && { name: updates.name }),
       ...(updates.name != null && { slug: generateSlug(updates.name) }),
@@ -161,7 +161,7 @@ export async function PUT(request: NextRequest) {
           ? parseFloat(String(updates.originalPrice))
           : null,
       }),
-      ...(normalizedImage != null && { image: normalizedImage }),
+      ...(storedImage != null && { image: storedImage }),
       ...(galleryImages != null && { images: galleryImages }),
       ...(parsedHeatLevel != null &&
       (parsedHeatLevel === 1 ||

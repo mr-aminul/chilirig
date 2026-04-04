@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
 import { getStoryContent } from "@/lib/story-content";
 import { getSupabaseAdmin } from "@/lib/supabase-server";
+import { canonicalImageUrlForStorage } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -56,7 +57,10 @@ export async function PUT(request: NextRequest) {
       title: section.title ?? null,
       subtitle: section.subtitle ?? null,
       description: section.description ?? null,
-      image: section.image ?? null,
+      image:
+        section.image != null && String(section.image).trim() !== ""
+          ? canonicalImageUrlForStorage(String(section.image))
+          : null,
       image_alt: section.imageAlt ?? null,
       image_position: section.imagePosition ?? null,
       cta_text: section.ctaText ?? null,

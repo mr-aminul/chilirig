@@ -9,6 +9,7 @@ import { SectionContainer } from "@/components/SectionContainer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Recipe } from "@/data/recipes";
 import { fetchApiJson } from "@/lib/fetch-api";
+import { imageSrcForNext } from "@/lib/media-url";
 
 export default function RecipesPage() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
@@ -47,7 +48,7 @@ export default function RecipesPage() {
                 <Card className="group h-full overflow-hidden transition-all hover:shadow-xl hover:shadow-crimson-900/10">
                   <div className="relative h-64 overflow-hidden bg-gray-100">
                     <Image
-                      src={recipe.image}
+                      src={imageSrcForNext(recipe.image)}
                       alt={recipe.title}
                       fill
                       className="object-cover transition-transform duration-300 group-hover:scale-110"

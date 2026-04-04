@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { SectionContainer } from "@/components/SectionContainer";
+import { imageSrcForNext } from "@/lib/media-url";
 
 export interface CategoryCardItem {
   category: string;
@@ -50,7 +51,7 @@ export function CategoryCards({ categories }: CategoryCardsProps) {
                 <Link href={category.href}>
                   <div className="relative h-56 flex-shrink-0 overflow-hidden border-b border-white/25 bg-black/20">
                     <Image
-                      src={category.image}
+                      src={imageSrcForNext(category.image)}
                       alt={category.title}
                       fill
                       className="object-cover transition-transform duration-300 group-hover:scale-110"

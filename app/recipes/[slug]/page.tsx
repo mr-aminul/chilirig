@@ -14,6 +14,7 @@ import { Recipe } from "@/data/recipes";
 import { Clock, Users } from "lucide-react";
 import { useParams } from "next/navigation";
 import { fetchApiJson } from "@/lib/fetch-api";
+import { imageSrcForNext } from "@/lib/media-url";
 export default function RecipePage() {
   const params = useParams<{ slug: string }>();
   const slug = params?.slug;
@@ -73,7 +74,7 @@ export default function RecipePage() {
           <div className="mb-12 grid gap-8 lg:grid-cols-2">
             <div className="relative mx-auto aspect-[4/3] w-full max-w-md overflow-hidden rounded-2xl border border-gray-200 bg-gray-100 lg:mx-0 lg:max-w-lg">
               <Image
-                src={recipe.image}
+                src={imageSrcForNext(recipe.image)}
                 alt={recipe.title}
                 fill
                 className="object-cover"

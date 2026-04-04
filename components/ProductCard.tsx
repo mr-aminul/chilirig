@@ -8,6 +8,7 @@ import { Product } from "@/data/products";
 import { HeatMeter } from "@/components/HeatMeter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { imageSrcForNext } from "@/lib/media-url";
 import { cn, formatPrice } from "@/lib/utils";
 import { useCart } from "@/lib/store";
 import { motion } from "framer-motion";
@@ -31,7 +32,7 @@ export function ProductCard({ product, compact = false }: ProductCardProps) {
       id: product.id,
       name: product.name,
       price: product.price,
-      image: product.image,
+      image: imageSrcForNext(product.image),
     });
     setAdding(false);
   };
@@ -53,7 +54,7 @@ export function ProductCard({ product, compact = false }: ProductCardProps) {
             )}
           >
             <Image
-              src={product.image}
+              src={imageSrcForNext(product.image)}
               alt={product.name}
               fill
               className="object-cover transition-transform duration-300 group-hover:scale-110"

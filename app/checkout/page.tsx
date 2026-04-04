@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCart, useOrders } from "@/lib/store";
+import { imageSrcForNext } from "@/lib/media-url";
 import { formatPrice } from "@/lib/utils";
 import Image from "next/image";
 import { Minus, Plus, Trash2, Copy, Check, Banknote } from "lucide-react";
@@ -715,7 +716,7 @@ export default function CheckoutPage() {
                       >
                         <div className="relative h-16 w-16 overflow-hidden rounded-lg bg-gray-100">
                           <Image
-                            src={item.image}
+                            src={imageSrcForNext(item.image)}
                             alt={item.name}
                             fill
                             className="object-cover"

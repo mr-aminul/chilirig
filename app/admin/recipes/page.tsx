@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Recipe } from "@/data/recipes";
 import RecipeForm from "@/components/admin/RecipeForm";
+import { imageSrcForNext } from "@/lib/media-url";
 
 export default function RecipesPage() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
@@ -137,7 +138,7 @@ export default function RecipesPage() {
                 <div className="relative h-48 bg-muted">
                   {recipe.image && (
                     <img
-                      src={recipe.image}
+                      src={imageSrcForNext(recipe.image)}
                       alt={recipe.title}
                       className="w-full h-full object-cover"
                     />

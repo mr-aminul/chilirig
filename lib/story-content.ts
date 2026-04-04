@@ -2,7 +2,6 @@ import "server-only";
 
 import { StoryContent } from "@/data/story";
 import { getSupabaseAdmin } from "@/lib/supabase-server";
-import { normalizeImageUrl } from "@/lib/utils";
 
 export async function getStoryContent(): Promise<StoryContent | null> {
   try {
@@ -63,7 +62,7 @@ export async function getStoryContent(): Promise<StoryContent | null> {
         title: section.title ?? undefined,
         subtitle: section.subtitle ?? undefined,
         description: section.description ?? undefined,
-        image: section.image ? normalizeImageUrl(section.image) : undefined,
+        image: section.image ?? undefined,
         imageAlt: section.image_alt ?? undefined,
         imagePosition: section.image_position ?? undefined,
         promises: promisesMap.get(section.id) ?? undefined,

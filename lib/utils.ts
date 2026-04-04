@@ -71,3 +71,18 @@ export function normalizeImageUrl(value: string): string {
 
   return trimmedValue;
 }
+
+/** Turn `/api/remote-image?url=…` back into the real URL before saving to the database. */
+export function canonicalImageUrlForStorage(value: string): string {
+  const v = value.trim();
+  if (!v) return v;
+  if (!v.startsWith("/api/remote-image")) return v;
+  try {
+    const parsed = new URL(v, "http://local.invalid");
+    const inner = parsed.searchParams.get("url");
+    if (inner) return inner;
+  } catch {
+    /* ignore */
+  }
+  return v;
+}

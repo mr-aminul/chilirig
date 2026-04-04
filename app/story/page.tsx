@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { StorySection } from "@/data/story";
 import { getStoryContent } from "@/lib/story-content";
+import { imageSrcForNext } from "@/lib/media-url";
 import { Leaf, Package, Timer, type LucideIcon } from "lucide-react";
 
 const PROMISE_ICONS: LucideIcon[] = [Leaf, Timer, Package];
@@ -23,7 +24,7 @@ function renderSection(section: StorySection) {
           >
             {section.image && (
               <Image
-                src={section.image}
+                src={imageSrcForNext(section.image)}
                 alt={section.imageAlt || ""}
                 fill
                 className="object-cover"
@@ -121,7 +122,7 @@ function renderSection(section: StorySection) {
               }`}
             >
               <Image
-                src={section.image}
+                src={imageSrcForNext(section.image)}
                 alt={section.imageAlt || ""}
                 fill
                 className="object-cover"

@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import HeroSlideForm from "@/components/admin/HeroSlideForm";
+import { imageSrcForNext } from "@/lib/media-url";
 import { HeroContent, HeroSlide } from "@/data/hero";
 export default function HeroAdminPage() {
   const [heroContent, setHeroContent] = useState<HeroContent | null>(null);
@@ -155,7 +156,7 @@ export default function HeroAdminPage() {
               <Card key={slide.id} className="overflow-hidden">
                 <div className="relative h-56 bg-muted">
                   <img
-                    src={slide.image}
+                    src={imageSrcForNext(slide.image)}
                     alt={slide.alt}
                     className="h-full w-full object-cover"
                   />

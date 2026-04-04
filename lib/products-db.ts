@@ -2,12 +2,12 @@ import "server-only";
 
 import { HeatLevel, Product } from "@/data/products";
 import { getSupabaseAdmin } from "@/lib/supabase-server";
-import { normalizeImageUrl } from "@/lib/utils";
 
+/** Map DB row to Product. Image fields stay as stored (https://… or /images/…). */
 function toProduct(row: any): Product {
-  const image = normalizeImageUrl(row.image);
+  const image = (row.image ?? "").trim();
   const images: string[] = Array.isArray(row.images)
-    ? row.images.map((item: string) => normalizeImageUrl(item))
+    ? row.images.map((item: string) => String(item).trim()).filter(Boolean)
     : [];
   const galleryImages = [image, ...images.filter((item: string) => item && item !== image)];
 
@@ -19,7 +19,7 @@ function toProduct(row: any): Product {
     price: Number(row.price),
     originalPrice: row.original_price != null ? Number(row.original_price) : undefined,
     image,
-    images: galleryImages.length > 0 ? galleryImages : [image],
+    images: galleryImages.length > 0 ? galleryImages : image ? [image] : [],
     heatLevel: row.heat_level as HeatLevel,
     category: row.category,
     inStock: row.in_stock,

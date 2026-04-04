@@ -6,6 +6,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { defaultHeroContent, HeroSlide } from "@/data/hero";
 import { Button } from "@/components/ui/button";
+import { imageSrcForNext } from "@/lib/media-url";
 import { Badge } from "@/components/ui/badge";
 
 interface HeroProps {
@@ -41,7 +42,7 @@ export function Hero({ slides = defaultHeroContent.slides }: HeroProps) {
             }`}
           >
             <Image
-              src={slide.image}
+              src={imageSrcForNext(slide.image)}
               alt={slide.alt}
               fill
               className="object-cover"

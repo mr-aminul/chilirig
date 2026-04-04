@@ -21,6 +21,7 @@ import { formatPrice } from "@/lib/utils";
 import { useCart } from "@/lib/store";
 import { ShoppingCart, Minus, Plus } from "lucide-react";
 import { fetchApiJson } from "@/lib/fetch-api";
+import { imageSrcForNext } from "@/lib/media-url";
 export default function ProductPage() {
   const params = useParams<{ slug: string }>();
   const slug = params?.slug;
@@ -83,7 +84,7 @@ export default function ProductPage() {
         id: product.id,
         name: product.name,
         price: product.price,
-        image: product.image,
+        image: imageSrcForNext(product.image),
       });
     }
     setAddingToCart(false);
@@ -104,7 +105,9 @@ export default function ProductPage() {
             <div className="mx-auto w-[70%] space-y-4 lg:mx-0">
               <div className="relative aspect-square overflow-hidden rounded-2xl bg-gray-100 border border-gray-200">
                 <Image
-                  src={product.images[selectedImageIndex] || product.image}
+                  src={imageSrcForNext(
+                    product.images[selectedImageIndex] || product.image
+                  )}
                   alt={product.name}
                   fill
                   className="object-cover"
@@ -125,7 +128,7 @@ export default function ProductPage() {
                       }`}
                     >
                       <Image
-                        src={image}
+                        src={imageSrcForNext(image)}
                         alt={`${product.name} view ${index + 1}`}
                         fill
                         className="object-cover"

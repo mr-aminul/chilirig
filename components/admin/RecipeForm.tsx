@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Recipe } from "@/data/recipes";
+import { canonicalImageUrlForStorage } from "@/lib/utils";
 
 interface RecipeFormProps {
   recipe?: Recipe | null;
@@ -63,7 +64,7 @@ export default function RecipeForm({ recipe, onClose }: RecipeFormProps) {
         title: formData.title,
         slug: formData.slug || formData.title.toLowerCase().replace(/\s+/g, "-"),
         description: formData.description,
-        image: formData.image,
+        image: canonicalImageUrlForStorage(formData.image.trim()),
         prepTime: formData.prepTime,
         cookTime: formData.cookTime,
         servings: formData.servings,

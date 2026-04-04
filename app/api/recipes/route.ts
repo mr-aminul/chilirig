@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Recipe } from "@/data/recipes";
 import { requireAuth } from "@/lib/auth";
 import { getSupabaseAdmin } from "@/lib/supabase-server";
+import { canonicalImageUrlForStorage } from "@/lib/utils";
 
 const NO_STORE_HEADERS = { "Cache-Control": "no-store, max-age=0" };
 
@@ -61,7 +62,7 @@ export async function POST(request: NextRequest) {
       title: body.title,
       slug: body.slug || body.title.toLowerCase().replace(/\s+/g, "-"),
       description: body.description,
-      image: body.image,
+      image: canonicalImageUrlForStorage(String(body.image ?? "").trim()),
       prep_time: body.prepTime,
       cook_time: body.cookTime,
       servings: parseInt(body.servings) || 1,
@@ -107,7 +108,9 @@ export async function PUT(request: NextRequest) {
       ...(updates.title != null && { title: updates.title }),
       ...(updates.slug != null && { slug: updates.slug }),
       ...(updates.description != null && { description: updates.description }),
-      ...(updates.image != null && { image: updates.image }),
+      ...(updates.image != null && {
+        image: canonicalImageUrlForStorage(String(updates.image).trim()),
+      }),
       ...(updates.prepTime != null && { prep_time: updates.prepTime }),
       ...(updates.cookTime != null && { cook_time: updates.cookTime }),
       ...(updates.servings != null && { servings: parseInt(updates.servings) || 1 }),
