@@ -3,10 +3,10 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { 
-  Package, 
-  ChefHat, 
-  Star, 
+import {
+  Package,
+  ChefHat,
+  Star,
   Home,
   ImageIcon,
   ShoppingBag,
@@ -14,7 +14,8 @@ import {
   BookOpen,
   HelpCircle,
   Truck,
-  LogOut
+  LogOut,
+  Instagram,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -44,6 +45,15 @@ const adminSections = [
     description: "Manage homepage hero slides",
     icon: ImageIcon,
     href: "/admin/hero",
+    color: "text-primary",
+    bgColor: "bg-primary/10",
+  },
+  {
+    id: "instagram",
+    title: "Instagram",
+    description: "Homepage Instagram gallery section",
+    icon: Instagram,
+    href: "/admin/instagram",
     color: "text-primary",
     bgColor: "bg-primary/10",
   },

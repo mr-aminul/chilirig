@@ -75,11 +75,10 @@ export async function PUT(request: NextRequest) {
         .select("*");
       if (sectionsError) throw sectionsError;
 
+      const bodySections = body.sections ?? [];
       const promiseRows: any[] = [];
-      for (const insertedSection of insertedSections ?? []) {
-        const source = (body.sections ?? []).find(
-          (s: any) => (s.order ?? 0) === insertedSection.sort_order
-        );
+      (insertedSections ?? []).forEach((insertedSection, index) => {
+        const source = bodySections[index];
         if (source?.type === "promises" && Array.isArray(source.promises)) {
           source.promises.forEach((promise: any, idx: number) => {
             promiseRows.push({
@@ -90,7 +89,7 @@ export async function PUT(request: NextRequest) {
             });
           });
         }
-      }
+      });
       if (promiseRows.length > 0) {
         const { error: promisesError } = await supabase
           .from("story_promises")

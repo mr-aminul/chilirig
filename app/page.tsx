@@ -13,7 +13,9 @@ import { Newsletter } from "@/components/sections/Newsletter";
 import { HomePrefetch } from "@/components/HomePrefetch";
 import { Product } from "@/data/products";
 import { defaultHeroContent } from "@/data/hero";
+import { defaultInstagramGalleryContent } from "@/data/instagram-gallery";
 import { getHeroContent } from "@/lib/hero-content";
+import { getInstagramGalleryContent } from "@/lib/instagram-gallery-content";
 import { getProducts } from "@/lib/products-db";
 
 /** Hero and products come from Supabase — avoid static page cache showing stale slides. */
@@ -85,6 +87,7 @@ function buildCategoryCards(products: Product[]): CategoryCardItem[] {
 
 export default async function Home() {
   let heroSlides = defaultHeroContent.slides;
+  let instagramGallery = defaultInstagramGalleryContent;
   let categories: CategoryCardItem[] = [];
   let products: Product[] = [];
 
@@ -93,6 +96,12 @@ export default async function Home() {
     heroSlides = heroContent.slides;
   } catch (error) {
     console.error("Failed to load hero content:", error);
+  }
+
+  try {
+    instagramGallery = await getInstagramGalleryContent();
+  } catch (error) {
+    console.error("Failed to load Instagram gallery:", error);
   }
 
   try {
@@ -115,7 +124,7 @@ export default async function Home() {
         <FeaturedBanner />
         <RecipeTeaser />
         <SocialProof />
-        <InstagramGallery />
+        <InstagramGallery content={instagramGallery} />
         <Newsletter />
       </main>
       <Footer />

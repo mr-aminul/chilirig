@@ -3,31 +3,39 @@
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { SectionContainer } from "@/components/SectionContainer";
+import {
+  DEFAULT_INSTAGRAM_PROFILE_URL,
+  InstagramGalleryContent,
+} from "@/data/instagram-gallery";
 import { imageSrcForNext } from "@/lib/media-url";
-import { REMOTE_MEDIA_PLACEHOLDER } from "@/lib/remote-media-placeholder";
 
-const instagramImages = Array.from({ length: 6 }, (_, i) => ({
-  id: i + 1,
-  src: imageSrcForNext(REMOTE_MEDIA_PLACEHOLDER),
-  alt: `ChiliRig Instagram post ${i + 1}`,
-}));
+type InstagramGalleryProps = {
+  content: InstagramGalleryContent;
+};
 
-export function InstagramGallery() {
+export function InstagramGallery({ content }: InstagramGalleryProps) {
+  const tiles = content.tiles.map((tile) => ({
+    id: tile.id,
+    src: imageSrcForNext(tile.image),
+    alt: tile.alt,
+    href: tile.href?.trim() || DEFAULT_INSTAGRAM_PROFILE_URL,
+  }));
+
   return (
     <SectionContainer>
       <div className="mb-12 text-center">
         <h2 className="mb-4 font-display text-3xl font-bold text-[hsl(var(--text-primary))] sm:text-4xl">
-          Follow us on Instagram
+          {content.heading}
         </h2>
-        <p className="text-[hsl(var(--text-secondary))]">
-          Share your ChiliRig creations with #ChiliRig
-        </p>
+        <p className="text-[hsl(var(--text-secondary))]">{content.subheading}</p>
       </div>
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-        {instagramImages.map((image, index) => (
+        {tiles.map((image, index) => (
           <motion.a
             key={image.id}
-            href="#"
+            href={image.href}
+            target="_blank"
+            rel="noopener noreferrer"
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}

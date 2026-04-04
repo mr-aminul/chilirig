@@ -13,15 +13,6 @@ import { REMOTE_MEDIA_PLACEHOLDER } from "@/lib/remote-media-placeholder";
 
 const INACTIVITY_MS = 3000;
 const IDLE_CHECK_INTERVAL_MS = 500;
-const MESSENGER_URL = "https://www.facebook.com/profile.php?id=61572618660966";
-
-function MessengerIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-      <path d="M12 2C6.36 2 2 6.13 2 11.7c0 3.41 1.73 6.44 4.38 8.32V22l3.85-2.11c1.03.29 2.11.44 3.24.44 5.64 0 10-4.13 10-9.7S17.64 2 12 2zm.96 12.7l-2.66-2.83-5.24 2.83 5.76-6.13 2.66 2.83 5.24-2.83-5.76 6.13z" />
-    </svg>
-  );
-}
 
 export function Header() {
   const router = useRouter();
@@ -240,28 +231,6 @@ export function Header() {
           </div>
         )}
       </div>
-
-      {/* Floating Messenger Bubble */}
-      {mounted && (
-        <a
-          href={MESSENGER_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={`fixed right-6 z-50 group ${showCartBubble ? "bottom-24" : "bottom-6"}`}
-          aria-label="Open Messenger chat"
-        >
-          <motion.div
-            className="relative"
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: "spring", stiffness: 400, damping: 28 }}
-          >
-            <div className="w-14 h-14 rounded-full bg-[hsl(var(--primary))] shadow-lg shadow-black/20 flex items-center justify-center transition-all duration-300 group-hover:shadow-xl group-hover:shadow-black/30">
-              <MessengerIcon className="h-6 w-6 text-white" />
-            </div>
-          </motion.div>
-        </a>
-      )}
 
       {/* Floating Cart Bubble - Only show after mount to avoid hydration mismatch with persisted cart */}
       {showCartBubble && (
