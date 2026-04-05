@@ -2,106 +2,102 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import {
-  ArrowDown,
-  ArrowLeft,
-  ArrowUp,
-  Edit,
-  ImageIcon,
-  Plus,
-  Trash2,
-} from "lucide-react";
+import { ArrowLeft, ImageIcon, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import HeroSlideForm from "@/components/admin/HeroSlideForm";
-import { imageSrcForNext } from "@/lib/media-url";
-import { HeroContent, HeroSlide } from "@/data/hero";
+import { Input } from "@/components/ui/input";
+
 export default function HeroAdminPage() {
-  const [heroContent, setHeroContent] = useState<HeroContent | null>(null);
+  const [savedImages, setSavedImages] = useState<[string, string, string]>(["", "", ""]);
+  const [images, setImages] = useState<[string, string, string]>(["", "", ""]);
+  const [isEditing, setIsEditing] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [showForm, setShowForm] = useState(false);
-  const [editingSlide, setEditingSlide] = useState<HeroSlide | null>(null);
 
-  useEffect(() => {
-    fetchHeroContent();
-  }, []);
-
-  const fetchHeroContent = async () => {
+  const load = async () => {
+    setLoadError(null);
+    setLoading(true);
     try {
-      const response = await fetch("/api/hero", { cache: "no-store" });
+      const response = await fetch("/api/hero", {
+        cache: "no-store",
+        credentials: "same-origin",
+      });
       const result = await response.json();
-      if (result.success) {
-        setHeroContent(result.data);
+      if (result.success && Array.isArray(result.data?.images) && result.data.images.length === 3) {
+        const raw = result.data.images;
+        const next: [string, string, string] = [
+          String(raw[0] ?? ""),
+          String(raw[1] ?? ""),
+          String(raw[2] ?? ""),
+        ];
+        setSavedImages(next);
+        setImages(next);
+        setIsEditing(false);
+      } else {
+        setLoadError(result.error ?? `Failed to load (${response.status})`);
       }
-    } catch (error) {
-      console.error("Failed to fetch hero content:", error);
+    } catch {
+      setLoadError("Network error");
     } finally {
       setLoading(false);
     }
   };
 
-  const persistSlides = async (slides: HeroSlide[]) => {
-    setSaving(true);
+  useEffect(() => {
+    void load();
+  }, []);
 
+  const save = async () => {
+    setSaving(true);
+    setLoadError(null);
     try {
       const response = await fetch("/api/hero", {
         method: "PUT",
         cache: "no-store",
+        credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slides }),
+        body: JSON.stringify({ images }),
       });
       const result = await response.json();
-
-      if (result.success) {
-        setHeroContent(result.data);
+      if (result.success && Array.isArray(result.data?.images) && result.data.images.length === 3) {
+        const raw = result.data.images;
+        const next: [string, string, string] = [
+          String(raw[0] ?? ""),
+          String(raw[1] ?? ""),
+          String(raw[2] ?? ""),
+        ];
+        setSavedImages(next);
+        setImages(next);
+        setIsEditing(false);
       } else {
-        alert(`Failed to save hero content: ${result.error}`);
+        setLoadError(result.error ?? `Save failed (${response.status})`);
       }
-    } catch (error) {
-      console.error("Failed to save hero content:", error);
-      alert("Failed to save hero content");
+    } catch {
+      setLoadError("Network error while saving");
     } finally {
       setSaving(false);
     }
   };
 
-  const handleSaveSlide = async (slide: HeroSlide) => {
-    const slides = heroContent?.slides ?? [];
-    const existingIndex = slides.findIndex((item) => item.id === slide.id);
-    const nextSlides =
-      existingIndex >= 0
-        ? slides.map((item) => (item.id === slide.id ? slide : item))
-        : [...slides, slide];
-
-    await persistSlides(nextSlides);
-    setShowForm(false);
-    setEditingSlide(null);
+  const setAt = (index: 0 | 1 | 2, value: string) => {
+    setImages((prev) => {
+      const next: [string, string, string] = [...prev] as [string, string, string];
+      next[index] = value;
+      return next;
+    });
   };
 
-  const handleDelete = async (id: string) => {
-    const slides = heroContent?.slides ?? [];
-    if (slides.length <= 1) {
-      alert("The hero section needs at least one slide.");
-      return;
-    }
-
-    if (!confirm("Are you sure you want to delete this hero slide?")) return;
-    await persistSlides(slides.filter((slide) => slide.id !== id));
+  const startEdit = () => {
+    setImages([...savedImages] as [string, string, string]);
+    setIsEditing(true);
+    setLoadError(null);
   };
 
-  const handleMove = async (id: string, direction: -1 | 1) => {
-    const slides = [...(heroContent?.slides ?? [])];
-    const index = slides.findIndex((slide) => slide.id === id);
-    const targetIndex = index + direction;
-
-    if (index === -1 || targetIndex < 0 || targetIndex >= slides.length) {
-      return;
-    }
-
-    const [slide] = slides.splice(index, 1);
-    slides.splice(targetIndex, 0, slide);
-    await persistSlides(slides);
+  const cancelEdit = () => {
+    setImages([...savedImages] as [string, string, string]);
+    setIsEditing(false);
+    setLoadError(null);
   };
 
   return (
@@ -114,7 +110,7 @@ export default function HeroAdminPage() {
                 <ArrowLeft className="h-5 w-5" />
               </Link>
               <ImageIcon className="h-5 w-5 text-primary" />
-              <h1 className="text-xl font-display font-semibold">Hero Management</h1>
+              <h1 className="text-xl font-display font-semibold">Hero images</h1>
             </div>
             <Link href="/">
               <Button variant="ghost" size="sm">
@@ -125,104 +121,81 @@ export default function HeroAdminPage() {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="text-3xl font-display font-bold">Homepage Hero Slides</h2>
-            <p className="text-muted-foreground">
-              Manage the slideshow images shown at the top of the homepage.
-            </p>
-          </div>
-          <Button onClick={() => setShowForm(true)} className="gap-2">
-            <Plus className="h-4 w-4" />
-            Add Slide
-          </Button>
-        </div>
+      <main className="container mx-auto max-w-2xl px-4 py-8 sm:px-6 lg:px-8">
+        <Card>
+          <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <CardTitle className="text-lg">Homepage hero</CardTitle>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Three image URLs (first → third). Only non-empty links appear on the site.
+              </p>
+            </div>
+            {!loading && !loadError ? (
+              <div className="flex flex-wrap gap-2">
+                {!isEditing ? (
+                  <Button type="button" variant="secondary" className="gap-2" onClick={startEdit}>
+                    <Pencil className="h-4 w-4" />
+                    Edit
+                  </Button>
+                ) : null}
+                <Button type="button" variant="outline" size="sm" onClick={() => void load()} disabled={saving}>
+                  Reload
+                </Button>
+              </div>
+            ) : null}
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {loadError ? (
+              <p className="text-sm text-red-700">{loadError}</p>
+            ) : null}
 
-        {loading ? (
-          <div className="py-12 text-center">
-            <p className="text-muted-foreground">Loading hero content...</p>
-          </div>
-        ) : !heroContent || heroContent.slides.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <ImageIcon className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-              <p className="text-muted-foreground">No hero slides found.</p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-            {heroContent.slides.map((slide, index) => (
-              <Card key={slide.id} className="overflow-hidden">
-                <div className="relative h-56 bg-muted">
-                  <img
-                    src={imageSrcForNext(slide.image)}
-                    alt={slide.alt}
-                    className="h-full w-full object-cover"
-                  />
-                  <div className="absolute right-2 top-2 rounded bg-black/70 px-2 py-1 text-xs font-medium text-white">
-                    Slide {index + 1}
+            {loading ? (
+              <p className="text-sm text-muted-foreground">Loading current hero URLs…</p>
+            ) : !isEditing ? (
+              <ul className="divide-y divide-black/10 rounded-xl border border-black/10 bg-muted/30">
+                {[0, 1, 2].map((i) => {
+                  const url = savedImages[i].trim();
+                  return (
+                    <li key={i} className="flex gap-3 px-4 py-3 text-sm">
+                      <span className="w-8 shrink-0 font-medium text-muted-foreground">{i + 1}.</span>
+                      <div className="min-w-0 flex-1">
+                        {url ? (
+                          <p className="break-all font-mono text-xs leading-relaxed" title={savedImages[i]}>
+                            {savedImages[i]}
+                          </p>
+                        ) : (
+                          <p className="text-muted-foreground italic">No URL set</p>
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <div className="space-y-4">
+                {[0, 1, 2].map((i) => (
+                  <div key={i}>
+                    <label className="mb-1 block text-sm font-medium">Image URL {i + 1}</label>
+                    <Input
+                      value={images[i]}
+                      onChange={(e) => setAt(i as 0 | 1 | 2, e.target.value)}
+                      placeholder="https://…"
+                    />
                   </div>
+                ))}
+                <div className="flex flex-wrap gap-2 pt-2">
+                  <Button onClick={() => void save()} disabled={saving}>
+                    {saving ? "Saving…" : "Save"}
+                  </Button>
+                  <Button type="button" variant="outline" onClick={cancelEdit} disabled={saving}>
+                    Cancel
+                  </Button>
                 </div>
-                <CardHeader>
-                  <CardTitle className="line-clamp-2 text-lg">{slide.alt}</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <p className="rounded bg-muted px-3 py-2 font-mono text-xs text-muted-foreground">
-                    {slide.image}
-                  </p>
-
-                  <div className="flex flex-wrap gap-2">
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      onClick={() => {
-                        setEditingSlide(slide);
-                        setShowForm(true);
-                      }}
-                    >
-                      <Edit className="mr-2 h-4 w-4" />
-                      Edit
-                    </Button>
-                    <Button size="sm" variant="secondary" onClick={() => handleMove(slide.id, -1)}>
-                      <ArrowUp className="mr-2 h-4 w-4" />
-                      Up
-                    </Button>
-                    <Button size="sm" variant="secondary" onClick={() => handleMove(slide.id, 1)}>
-                      <ArrowDown className="mr-2 h-4 w-4" />
-                      Down
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      className="border-red-200 bg-red-50 text-red-700 hover:border-red-300 hover:bg-red-100"
-                      onClick={() => handleDelete(slide.id)}
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Delete
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-
-        {saving && (
-          <p className="mt-4 text-sm text-muted-foreground">Saving hero content...</p>
-        )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </main>
-
-      {showForm && (
-        <HeroSlideForm
-          slide={editingSlide}
-          onClose={() => {
-            setShowForm(false);
-            setEditingSlide(null);
-          }}
-          onSave={handleSaveSlide}
-        />
-      )}
     </div>
   );
 }

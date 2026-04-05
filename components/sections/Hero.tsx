@@ -4,20 +4,22 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { defaultHeroContent, HeroSlide } from "@/data/hero";
+import { HeroSlide } from "@/data/hero";
 import { Button } from "@/components/ui/button";
 import { imageSrcForNext } from "@/lib/media-url";
 import { Badge } from "@/components/ui/badge";
 
 interface HeroProps {
-  slides?: HeroSlide[];
+  slides: HeroSlide[];
 }
 
-export function Hero({ slides = defaultHeroContent.slides }: HeroProps) {
+export function Hero({ slides }: HeroProps) {
   const [activeSlide, setActiveSlide] = useState(0);
-  const heroSlides = slides.length > 0 ? slides : defaultHeroContent.slides;
+  const heroSlides = slides;
 
   useEffect(() => {
+    if (heroSlides.length <= 1) return;
+
     const interval = window.setInterval(() => {
       setActiveSlide((current) => (current + 1) % heroSlides.length);
     }, 5000);
@@ -34,29 +36,41 @@ export function Hero({ slides = defaultHeroContent.slides }: HeroProps) {
   return (
     <section className="relative w-full h-screen min-h-[600px] max-h-[900px] overflow-hidden pt-24">
       <div className="absolute inset-0 w-full h-full">
-        {heroSlides.map((slide, index) => (
-          <div
-            key={slide.id}
-            className={`absolute inset-0 transition-opacity duration-1000 ${
-              index === activeSlide ? "opacity-100" : "opacity-0"
-            }`}
-          >
-            <Image
-              src={imageSrcForNext(slide.image)}
-              alt={slide.alt}
-              fill
-              className="object-cover"
-              priority={index === 0}
-              sizes="100vw"
-              quality={90}
+        {heroSlides.length > 0 ? (
+          <>
+            {heroSlides.map((slide, index) => (
+              <div
+                key={slide.id}
+                className={`absolute inset-0 transition-opacity duration-1000 ${
+                  index === activeSlide ? "opacity-100" : "opacity-0"
+                }`}
+              >
+                <Image
+                  src={imageSrcForNext(slide.image)}
+                  alt={slide.alt}
+                  fill
+                  className="object-cover"
+                  priority={index === 0}
+                  sizes="100vw"
+                  quality={90}
+                />
+              </div>
+            ))}
+            <div
+              className="absolute inset-0 bg-gradient-radial from-[hsl(var(--primary))]/20 via-transparent to-transparent opacity-50"
+              style={{
+                background:
+                  "radial-gradient(circle at 50% 20%, hsl(var(--primary) / 0.2) 0%, transparent 60%)",
+              }}
             />
-          </div>
-        ))}
-        <div
-          className="absolute inset-0 bg-gradient-radial from-[hsl(var(--primary))]/20 via-transparent to-transparent opacity-50"
-          style={{ background: "radial-gradient(circle at 50% 20%, hsl(var(--primary) / 0.2) 0%, transparent 60%)" }}
-        />
-        <div className="absolute inset-0 bg-black/35" />
+            <div className="absolute inset-0 bg-black/35" />
+          </>
+        ) : (
+          <div
+            className="absolute inset-0 bg-[hsl(var(--primary))]"
+            aria-hidden
+          />
+        )}
       </div>
 
       <div
@@ -119,24 +133,21 @@ export function Hero({ slides = defaultHeroContent.slides }: HeroProps) {
                 </Link>
               </div>
 
-              {/* Microcopy */}
-              <p className="text-sm text-white/80 pt-2 drop-shadow-sm">
-                Ships in 24 hours • Free shipping on orders over ৳5,000
-              </p>
-
-              <div className="flex items-center gap-2 pt-2">
-                {heroSlides.map((slide, index) => (
-                  <button
-                    key={slide.id}
-                    type="button"
-                    aria-label={`Show hero slide ${index + 1}`}
-                    onClick={() => setActiveSlide(index)}
-                    className={`h-2.5 rounded-full transition-all ${
-                      index === activeSlide ? "w-8 bg-white" : "w-2.5 bg-white/45 hover:bg-white/70"
-                    }`}
-                  />
-                ))}
-              </div>
+              {heroSlides.length > 1 ? (
+                <div className="flex items-center gap-2 pt-2">
+                  {heroSlides.map((slide, index) => (
+                    <button
+                      key={slide.id}
+                      type="button"
+                      aria-label={`Show hero slide ${index + 1}`}
+                      onClick={() => setActiveSlide(index)}
+                      className={`h-2.5 rounded-full transition-all ${
+                        index === activeSlide ? "w-8 bg-white" : "w-2.5 bg-white/45 hover:bg-white/70"
+                      }`}
+                    />
+                  ))}
+                </div>
+              ) : null}
             </motion.div>
           </div>
         </div>

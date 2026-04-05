@@ -2,13 +2,15 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { 
-  HelpCircle, 
-  Plus, 
-  Edit, 
-  Trash2, 
+import {
+  HelpCircle,
+  Plus,
+  Edit,
+  Trash2,
   ArrowLeft,
-  Search
+  Search,
+  ChevronUp,
+  ChevronDown,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,6 +25,7 @@ export default function FAQPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingCategory, setEditingCategory] = useState<FAQCategory | null>(null);
   const [editingQuestion, setEditingQuestion] = useState<{ categoryId: string; question: any } | null>(null);
+  const [reorderBusy, setReorderBusy] = useState(false);
 
   useEffect(() => {
     fetchFAQs();
@@ -105,6 +108,44 @@ export default function FAQPage() {
     fetchFAQs();
   };
 
+  const canReorderQuestions = searchTerm.trim() === "";
+
+  const handleMoveQuestion = async (
+    categoryId: string,
+    questionId: string,
+    direction: "up" | "down"
+  ) => {
+    const category = faqs.find((c) => c.id === categoryId);
+    if (!category) return;
+    const idx = category.questions.findIndex((q) => q.id === questionId);
+    if (idx === -1) return;
+    const newIdx = direction === "up" ? idx - 1 : idx + 1;
+    if (newIdx < 0 || newIdx >= category.questions.length) return;
+
+    const questionIds = category.questions.map((q) => q.id);
+    [questionIds[idx], questionIds[newIdx]] = [questionIds[newIdx], questionIds[idx]];
+
+    setReorderBusy(true);
+    try {
+      const response = await fetch("/api/faq", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ categoryId, questionIds }),
+      });
+      const result = await response.json();
+      if (result.success) {
+        await fetchFAQs();
+      } else {
+        alert(result.error ?? "Failed to reorder questions");
+      }
+    } catch (error) {
+      console.error("Failed to reorder FAQ:", error);
+      alert("Failed to reorder questions");
+    } finally {
+      setReorderBusy(false);
+    }
+  };
+
   const filteredFAQs = faqs.map((category) => ({
     ...category,
     questions: category.questions.filter(
@@ -142,14 +183,22 @@ export default function FAQPage() {
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Actions Bar */}
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search FAQs..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
+          <div className="flex-1 flex flex-col gap-1">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <Input
+                placeholder="Search FAQs..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+                aria-describedby={!canReorderQuestions ? "faq-search-reorder-hint" : undefined}
+              />
+            </div>
+            {!canReorderQuestions && (
+              <p id="faq-search-reorder-hint" className="text-xs text-muted-foreground pl-1">
+                Clear search to reorder questions with the arrow buttons.
+              </p>
+            )}
           </div>
           <Button onClick={handleAddCategory} className="gap-2">
             <Plus className="h-4 w-4" />
@@ -214,16 +263,44 @@ export default function FAQPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {category.questions.map((question) => (
+                    {category.questions.map((question, index) => (
                       <div
                         key={question.id}
                         className="p-4 border rounded-lg flex items-start justify-between gap-4"
                       >
-                        <div className="flex-1">
+                        <div className="flex-1 min-w-0">
                           <h4 className="font-medium mb-1">{question.question}</h4>
                           <p className="text-sm text-muted-foreground">{question.answer}</p>
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex items-start gap-1 shrink-0">
+                          {canReorderQuestions && (
+                            <div className="flex flex-col gap-0.5 border-r border-black/10 pr-1 mr-1">
+                              <Button
+                                type="button"
+                                size="icon"
+                                variant="ghost"
+                                className="h-8 w-8"
+                                disabled={reorderBusy || index === 0}
+                                onClick={() => handleMoveQuestion(category.id, question.id, "up")}
+                                aria-label="Move question up"
+                              >
+                                <ChevronUp className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                type="button"
+                                size="icon"
+                                variant="ghost"
+                                className="h-8 w-8"
+                                disabled={
+                                  reorderBusy || index === category.questions.length - 1
+                                }
+                                onClick={() => handleMoveQuestion(category.id, question.id, "down")}
+                                aria-label="Move question down"
+                              >
+                                <ChevronDown className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          )}
                           <Button
                             size="icon"
                             variant="ghost"

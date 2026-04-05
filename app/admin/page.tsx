@@ -2,34 +2,67 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Package,
   ChefHat,
   Star,
   Home,
   ImageIcon,
-  ShoppingBag,
-  FileText,
   BookOpen,
   HelpCircle,
-  Truck,
   LogOut,
   Instagram,
+  ChevronRight,
 } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AdminOrdersPanel } from "@/components/admin/AdminOrdersPanel";
+import type { LucideIcon } from "lucide-react";
 
-const adminSections = [
+type AdminSection = {
+  id: string;
+  title: string;
+  description: string;
+  icon: LucideIcon;
+  href: string;
+  color: string;
+  bgColor: string;
+};
+
+/** Pages you touch less often — long-form content and reference material */
+const adminSectionsStable: AdminSection[] = [
   {
-    id: "orders",
-    title: "Orders",
-    description: "Review orders and send them to Pathao",
-    icon: Truck,
-    href: "/admin/orders",
+    id: "recipes",
+    title: "Recipes",
+    description: "Manage recipe content",
+    icon: ChefHat,
+    href: "/admin/recipes",
     color: "text-primary",
     bgColor: "bg-primary/10",
   },
+  {
+    id: "story",
+    title: "Story",
+    description: "Manage your story page content",
+    icon: BookOpen,
+    href: "/admin/story",
+    color: "text-primary",
+    bgColor: "bg-primary/10",
+  },
+  {
+    id: "faq",
+    title: "FAQ",
+    description: "Manage frequently asked questions",
+    icon: HelpCircle,
+    href: "/admin/faq",
+    color: "text-primary",
+    bgColor: "bg-primary/10",
+  },
+];
+
+/** Catalog, homepage promos, social proof — orders live under the Orders tab */
+const adminSectionsFrequent: AdminSection[] = [
   {
     id: "products",
     title: "Products",
@@ -58,15 +91,6 @@ const adminSections = [
     bgColor: "bg-primary/10",
   },
   {
-    id: "recipes",
-    title: "Recipes",
-    description: "Manage recipe content",
-    icon: ChefHat,
-    href: "/admin/recipes",
-    color: "text-primary",
-    bgColor: "bg-primary/10",
-  },
-  {
     id: "reviews",
     title: "Reviews",
     description: "Manage customer reviews",
@@ -75,29 +99,85 @@ const adminSections = [
     color: "text-primary",
     bgColor: "bg-primary/10",
   },
-  {
-    id: "story",
-    title: "Story",
-    description: "Manage your story page content",
-    icon: BookOpen,
-    href: "/admin/story",
-    color: "text-primary",
-    bgColor: "bg-primary/10",
-  },
-  {
-    id: "faq",
-    title: "FAQ",
-    description: "Manage frequently asked questions",
-    icon: HelpCircle,
-    href: "/admin/faq",
-    color: "text-primary",
-    bgColor: "bg-primary/10",
-  },
 ];
+
+function AdminSectionColumn({
+  heading,
+  headingId,
+  sections,
+}: {
+  heading: string;
+  headingId: string;
+  sections: AdminSection[];
+}) {
+  return (
+    <div className="min-w-0">
+      <h3
+        id={headingId}
+        className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 px-1"
+      >
+        {heading}
+      </h3>
+      <nav aria-labelledby={headingId} className="border border-black/10 rounded-xl overflow-hidden bg-white/80">
+        <ul className="divide-y divide-black/10">
+          {sections.map((section) => {
+            const Icon = section.icon;
+
+            return (
+              <li key={section.id}>
+                <Link
+                  href={section.href}
+                  className="flex items-center gap-4 px-4 py-4 sm:px-5 hover:bg-black/[0.03] transition-colors group"
+                >
+                  <div className="relative shrink-0">
+                    <div
+                      className={`w-10 h-10 rounded-lg ${section.bgColor} flex items-center justify-center`}
+                    >
+                      <Icon className={`h-5 w-5 ${section.color}`} />
+                    </div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-display font-semibold text-foreground group-hover:text-primary transition-colors">
+                      {section.title}
+                    </p>
+                    <p className="text-sm text-muted-foreground mt-0.5">{section.description}</p>
+                  </div>
+                  <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground group-hover:text-primary transition-colors" />
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
+    </div>
+  );
+}
 
 export default function AdminDashboard() {
   const router = useRouter();
   const [loggingOut, setLoggingOut] = useState(false);
+  const [adminTab, setAdminTab] = useState<"controls" | "orders">("orders");
+  const [pendingDispatchCount, setPendingDispatchCount] = useState<number | null>(null);
+
+  const refreshPendingDispatchCount = useCallback(() => {
+    void (async () => {
+      try {
+        const response = await fetch("/api/admin/orders/pending-count", { cache: "no-store" });
+        const data = await response.json();
+        if (data.success && typeof data.count === "number") {
+          setPendingDispatchCount(data.count);
+        } else {
+          setPendingDispatchCount(0);
+        }
+      } catch {
+        setPendingDispatchCount(0);
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    refreshPendingDispatchCount();
+  }, [refreshPendingDispatchCount]);
 
   const handleLogout = async () => {
     setLoggingOut(true);
@@ -154,66 +234,53 @@ export default function AdminDashboard() {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h2 className="text-3xl font-display font-bold mb-2">Welcome to Admin Dashboard</h2>
-          <p className="text-muted-foreground">
-            Manage all aspects of your ecommerce website from here
-          </p>
-        </div>
+        <Tabs
+          value={adminTab}
+          onValueChange={(value) => setAdminTab(value as "controls" | "orders")}
+          className="w-full max-w-6xl"
+        >
+          <TabsList className="mb-6 w-full max-w-md sm:w-auto" aria-label="Admin sections">
+            <TabsTrigger
+              value="orders"
+              className="gap-2"
+              aria-label={
+                pendingDispatchCount != null && pendingDispatchCount > 0
+                  ? `Orders, ${pendingDispatchCount} pending dispatch to Pathao`
+                  : "Orders"
+              }
+            >
+              <span>Orders</span>
+              {pendingDispatchCount != null && pendingDispatchCount > 0 ? (
+                <span
+                  className="flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 text-[0.625rem] font-bold leading-none text-destructive-foreground"
+                  aria-hidden={true}
+                >
+                  {pendingDispatchCount > 99 ? "99+" : pendingDispatchCount}
+                </span>
+              ) : null}
+            </TabsTrigger>
+            <TabsTrigger value="controls">Controls</TabsTrigger>
+          </TabsList>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-lg">Total Products</CardTitle>
-              <ShoppingBag className="h-5 w-5 text-primary" />
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold">-</p>
-              <p className="text-sm text-muted-foreground">Active products</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-lg">Total Recipes</CardTitle>
-              <FileText className="h-5 w-5 text-primary" />
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold">-</p>
-              <p className="text-sm text-muted-foreground">Published recipes</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-lg">Total Reviews</CardTitle>
-              <Star className="h-5 w-5 text-primary" />
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold">-</p>
-              <p className="text-sm text-muted-foreground">Customer reviews</p>
-            </CardContent>
-          </Card>
-        </div>
+          <TabsContent value="orders" className="mt-0 focus-visible:ring-0">
+            <AdminOrdersPanel embedded onOrdersChanged={refreshPendingDispatchCount} />
+          </TabsContent>
 
-        {/* Admin Sections */}
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-          {adminSections.map((section) => {
-            const Icon = section.icon;
-            return (
-              <Link key={section.id} href={section.href}>
-                <Card className="hover:shadow-xl transition-all cursor-pointer h-full">
-                  <CardHeader>
-                    <div className={`w-12 h-12 rounded-lg ${section.bgColor} flex items-center justify-center mb-4`}>
-                      <Icon className={`h-6 w-6 ${section.color}`} />
-                    </div>
-                    <CardTitle>{section.title}</CardTitle>
-                    <CardDescription>{section.description}</CardDescription>
-                  </CardHeader>
-                </Card>
-              </Link>
-            );
-          })}
-        </div>
+          <TabsContent value="controls" className="mt-0 focus-visible:ring-0">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10 max-w-5xl">
+              <AdminSectionColumn
+                headingId="admin-col-stable"
+                heading="Site content"
+                sections={adminSectionsStable}
+              />
+              <AdminSectionColumn
+                headingId="admin-col-frequent"
+                heading="Often updated"
+                sections={adminSectionsFrequent}
+              />
+            </div>
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );

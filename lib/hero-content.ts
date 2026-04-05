@@ -1,67 +1,60 @@
 import "server-only";
 
-import { defaultHeroContent, HeroContent, HeroSlide } from "@/data/hero";
+import { HeroContent, HeroSlide } from "@/data/hero";
 import { getSupabaseAdmin } from "@/lib/supabase-server";
 import { canonicalImageUrlForStorage } from "@/lib/utils";
 
-/** Hero slides as stored in Supabase (canonical image URLs). Admin API and homepage both use this; UI applies `imageSrcForNext` for display. */
-export async function getHeroContent(): Promise<HeroContent> {
-  try {
-    const supabase = getSupabaseAdmin();
-    const { data: slides, error } = await supabase
-      .from("hero_slides")
-      .select("*")
-      .order("sort_order", { ascending: true });
+const HERO_TABLE = "hero_home_images";
 
-    if (error) {
-      throw error;
+/** Always three slots; empty strings allowed in DB. */
+export async function getHeroAdminImages(): Promise<[string, string, string]> {
+  const supabase = getSupabaseAdmin();
+  // SECURITY DEFINER RPC returns rows regardless of RLS / key mixups on direct table reads.
+  const { data, error } = await supabase.rpc("list_hero_home_images");
+
+  if (error) throw error;
+
+  const out: [string, string, string] = ["", "", ""];
+  for (const row of data ?? []) {
+    const r = row as Record<string, unknown>;
+    const slotRaw = r.slot ?? r.Slot;
+    const slot = Number(slotRaw);
+    const urlRaw = r.image_url ?? r.imageUrl;
+    const url = typeof urlRaw === "string" ? urlRaw : urlRaw != null ? String(urlRaw) : "";
+    if (slot >= 1 && slot <= 3 && Number.isFinite(slot)) {
+      out[slot - 1] = url;
     }
-
-    if (!slides || slides.length === 0) {
-      return defaultHeroContent;
-    }
-
-    return {
-      slides: slides.map((slide, index) => ({
-        id: String(slide.id ?? `hero-slide-${index + 1}`),
-        image: slide.image ?? "",
-        alt: slide.alt_text ?? `Hero slide ${index + 1}`,
-      })),
-    };
-  } catch {
-    return defaultHeroContent;
   }
+  return out;
 }
 
-export async function saveHeroContent(content: HeroContent): Promise<HeroContent> {
+/** Slides for <Hero /> — only slots with a non-empty image URL. */
+export async function getHeroContent(): Promise<HeroContent> {
+  const [a, b, c] = await getHeroAdminImages();
+  const slides: HeroSlide[] = [];
+  const triple: [string, string, string] = [a, b, c];
+  for (let i = 0; i < 3; i++) {
+    const raw = triple[i].trim();
+    if (!raw) continue;
+    const image = canonicalImageUrlForStorage(raw);
+    if (!image.trim()) continue;
+    slides.push({
+      id: `hero-slot-${i + 1}`,
+      image,
+      alt: `Hero image ${i + 1}`,
+    });
+  }
+  return { slides };
+}
+
+export async function saveHeroAdminImages(urls: [string, string, string]): Promise<void> {
   const supabase = getSupabaseAdmin();
+  const rows = urls.map((url, index) => ({
+    slot: index + 1,
+    image_url: canonicalImageUrlForStorage((url ?? "").trim()),
+  }));
 
-  const rows = content.slides
-    .filter((slide) => slide.image?.trim())
-    .map((slide, index) => ({
-      image: canonicalImageUrlForStorage(slide.image.trim()),
-      alt_text: slide.alt?.trim() || `Hero slide ${index + 1}`,
-      sort_order: index + 1,
-    }));
+  const { error } = await supabase.from(HERO_TABLE).upsert(rows, { onConflict: "slot" });
 
-  if (rows.length === 0) {
-    throw new Error("At least one hero slide with an image URL is required");
-  }
-
-  const { error: deleteError } = await supabase
-    .from("hero_slides")
-    .delete()
-    .gte("sort_order", 0);
-
-  if (deleteError) {
-    throw deleteError;
-  }
-
-  const { error: insertError } = await supabase.from("hero_slides").insert(rows);
-
-  if (insertError) {
-    throw insertError;
-  }
-
-  return getHeroContent();
+  if (error) throw error;
 }

@@ -1,3 +1,5 @@
+-- Legacy: new installs should use hero_home_images.sql (three fixed hero URLs) instead.
+
 create table if not exists public.hero_slides (
   id uuid primary key default gen_random_uuid(),
   image text not null,

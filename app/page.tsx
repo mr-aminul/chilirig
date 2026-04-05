@@ -12,14 +12,16 @@ import { InstagramGallery } from "@/components/sections/InstagramGallery";
 import { Newsletter } from "@/components/sections/Newsletter";
 import { HomePrefetch } from "@/components/HomePrefetch";
 import { Product } from "@/data/products";
-import { defaultHeroContent } from "@/data/hero";
 import { defaultInstagramGalleryContent } from "@/data/instagram-gallery";
 import { getHeroContent } from "@/lib/hero-content";
 import { getInstagramGalleryContent } from "@/lib/instagram-gallery-content";
 import { getProducts } from "@/lib/products-db";
+import { unstable_noStore as noStore } from "next/cache";
 
-/** Hero and products come from Supabase — avoid static page cache showing stale slides. */
+/** Hero and products come from Supabase — no static caching of this route. */
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
 
 function getCategoryTitle(category: string, representative: Product): string {
   if (category === "gift-set") {
@@ -86,17 +88,14 @@ function buildCategoryCards(products: Product[]): CategoryCardItem[] {
 }
 
 export default async function Home() {
-  let heroSlides = defaultHeroContent.slides;
+  noStore();
+
+  const heroContent = await getHeroContent();
+  const heroSlides = heroContent.slides;
+
   let instagramGallery = defaultInstagramGalleryContent;
   let categories: CategoryCardItem[] = [];
   let products: Product[] = [];
-
-  try {
-    const heroContent = await getHeroContent();
-    heroSlides = heroContent.slides;
-  } catch (error) {
-    console.error("Failed to load hero content:", error);
-  }
 
   try {
     instagramGallery = await getInstagramGalleryContent();
