@@ -1,166 +1,110 @@
-import Image from "next/image";
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { Flame, Layers, Leaf } from "lucide-react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { SectionContainer } from "@/components/SectionContainer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { StorySection } from "@/data/story";
-import { getStoryContent } from "@/lib/story-content";
+import type { StoryPageContent, StoryPromiseIcon } from "@/data/story";
+import { fetchApiJson, withCacheBust } from "@/lib/fetch-api";
 import { imageSrcForNext } from "@/lib/media-url";
-import { Leaf, Package, Timer, type LucideIcon } from "lucide-react";
 
-const PROMISE_ICONS: LucideIcon[] = [Leaf, Timer, Package];
-
-function renderSection(section: StorySection) {
-  switch (section.type) {
-    case "hero":
-      return (
-        <div key={section.id} className="mb-16 grid gap-12 lg:grid-cols-2 lg:items-center">
-          <div
-            className={`relative mx-auto aspect-[4/3] w-full max-w-md overflow-hidden rounded-2xl border border-border bg-gray-100 lg:mx-0 lg:max-w-lg ${
-              section.imagePosition === "right" ? "order-2" : ""
-            }`}
-          >
-            {section.image && (
-              <Image
-                src={imageSrcForNext(section.image)}
-                alt={section.imageAlt || ""}
-                fill
-                className="object-cover"
-                sizes="(max-width: 768px) 100vw, 50vw"
-              />
-            )}
-          </div>
-          <div
-            className={`space-y-6 ${
-              section.imagePosition === "right" ? "lg:pr-6" : "lg:pl-6"
-            }`}
-          >
-            {section.title && (
-              <h2 className="font-display text-3xl font-bold text-[hsl(var(--text-primary))] sm:text-4xl">
-                {section.title}
-              </h2>
-            )}
-            {section.description &&
-              section.description.split("\n\n").map((paragraph, index) => (
-                <p key={index} className="text-lg text-[hsl(var(--text-secondary))]">
-                  {paragraph}
-                </p>
-              ))}
-          </div>
-        </div>
-      );
-
-    case "promises":
-      return (
-        <div key={section.id} className="mb-16">
-          {section.title && (
-            <h2 className="mb-12 text-center font-display text-3xl font-bold text-[hsl(var(--text-primary))] sm:text-4xl">
-              {section.title}
-            </h2>
-          )}
-          {section.promises && section.promises.length > 0 && (
-            <div className="grid gap-6 md:grid-cols-3">
-              {section.promises.map((promise, index) => {
-                const Icon = PROMISE_ICONS[index % PROMISE_ICONS.length];
-                return (
-                  <Card
-                    key={promise.id}
-                    className="group h-full cursor-pointer transition-all duration-300 border-black/10 bg-white/80 hover:!bg-[hsl(var(--primary))] hover:!border-[hsl(var(--primary))] hover:!shadow-[hsl(var(--primary))]/20"
-                  >
-                    <CardContent className="p-6">
-                      <div className="flex gap-3">
-                        <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary transition-colors duration-300 group-hover:bg-white/15 group-hover:text-white">
-                          <Icon className="h-3.5 w-3.5" aria-hidden />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <h3 className="mb-2 font-display text-lg font-semibold leading-snug text-[hsl(var(--text-primary))] transition-colors duration-300 group-hover:!text-white sm:text-xl">
-                            {promise.title}
-                          </h3>
-                          <p className="text-sm leading-relaxed text-[hsl(var(--text-secondary))] transition-colors duration-300 group-hover:!text-white/90">
-                            {promise.description}
-                          </p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      );
-
-    case "content":
-      return (
-        <div key={section.id} className="mb-16 grid gap-12 lg:grid-cols-2 lg:items-center">
-          <div
-            className={`space-y-6 lg:pr-6 ${section.imagePosition === "right" ? "order-2 lg:order-1" : "order-2 lg:order-1"}`}
-          >
-            {section.title && (
-              <h2 className="font-display text-3xl font-bold text-[hsl(var(--text-primary))] sm:text-4xl">
-                {section.title}
-              </h2>
-            )}
-            {section.description &&
-              section.description.split("\n\n").map((paragraph, index) => (
-                <p key={index} className="text-lg text-[hsl(var(--text-secondary))]">
-                  {paragraph}
-                </p>
-              ))}
-            {section.ctaText && section.ctaLink && (
-              <Link href={section.ctaLink} className="inline-block pt-2">
-                <Button size="lg">{section.ctaText}</Button>
-              </Link>
-            )}
-          </div>
-          {section.image && (
-            <div
-              className={`relative mx-auto aspect-[4/3] w-full max-w-md overflow-hidden rounded-2xl border border-border bg-gray-100 lg:mx-0 lg:max-w-lg ${
-                section.imagePosition === "right" ? "order-1 lg:order-2" : "order-1 lg:order-2"
-              }`}
-            >
-              <Image
-                src={imageSrcForNext(section.image)}
-                alt={section.imageAlt || ""}
-                fill
-                className="object-cover"
-                sizes="(max-width: 768px) 100vw, 50vw"
-              />
-            </div>
-          )}
-        </div>
-      );
-
-    case "cta":
-      return (
-        <div key={section.id} className="mb-16 text-center">
-          {section.ctaText && section.ctaLink && (
-            <Link href={section.ctaLink}>
-              <Button size="lg">{section.ctaText}</Button>
-            </Link>
-          )}
-        </div>
-      );
-
-    default:
-      return null;
-  }
+function PromiseIcon({ icon }: { icon: StoryPromiseIcon }) {
+  const className = "h-6 w-6 text-crimson-600";
+  if (icon === "leaf") return <Leaf className={className} aria-hidden />;
+  if (icon === "flame") return <Flame className={className} aria-hidden />;
+  return <Layers className={className} aria-hidden />;
 }
 
-export default async function StoryPage() {
-  const story = await getStoryContent();
+function SectionImage({
+  imageUrl,
+  fetchPriority,
+}: {
+  imageUrl: string;
+  fetchPriority?: "high" | "low" | "auto";
+}) {
+  const trimmed = imageUrl.trim();
+  const src = trimmed ? imageSrcForNext(imageUrl) : "";
+  return (
+    <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-gray-100 bg-gray-50 shadow-sm">
+      {src ? (
+        // eslint-disable-next-line @next/next/no-img-element -- avoid next/image optimizer merging same-origin proxy URLs
+        <img
+          key={src}
+          src={src}
+          alt=""
+          fetchPriority={fetchPriority}
+          className="absolute inset-0 h-full w-full object-cover"
+          decoding="async"
+        />
+      ) : (
+        <div
+          className="absolute inset-0 bg-gradient-to-br from-gray-100 to-gray-200"
+          aria-hidden
+        />
+      )}
+    </div>
+  );
+}
 
-  if (!story) {
+function CtaLink({ label, href }: { label: string; href: string }) {
+  const external = /^https?:\/\//i.test(href);
+  if (external) {
+    return (
+      <a href={href} target="_blank" rel="noopener noreferrer">
+        <Button size="lg" className="min-w-[200px] px-10">
+          {label}
+        </Button>
+      </a>
+    );
+  }
+  return (
+    <Link href={href}>
+      <Button size="lg" className="min-w-[200px] px-10">
+        {label}
+      </Button>
+    </Link>
+  );
+}
+
+export default function StoryPage() {
+  const [content, setContent] = useState<StoryPageContent | null>(null);
+  const [phase, setPhase] = useState<"loading" | "ready" | "empty" | "error">("loading");
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const result = await fetchApiJson<{
+          success: boolean;
+          data?: StoryPageContent | null;
+        }>(withCacheBust("/api/story"));
+        if (!result.success) {
+          setPhase("error");
+          return;
+        }
+        if (result.data) {
+          setContent(result.data);
+          setPhase("ready");
+        } else {
+          setPhase("empty");
+        }
+      } catch {
+        setPhase("error");
+      }
+    };
+    void load();
+  }, []);
+
+  if (phase === "loading") {
     return (
       <>
         <Header />
-        <main>
+        <main className="min-h-[50vh] bg-white pt-24">
           <SectionContainer>
-            <p className="text-[hsl(var(--text-secondary))]">
-              We couldn&apos;t load this page right now. Please try again in a moment.
-            </p>
+            <p className="text-center text-gray-600">Loading…</p>
           </SectionContainer>
         </main>
         <Footer />
@@ -168,23 +112,108 @@ export default async function StoryPage() {
     );
   }
 
-  const sortedSections = [...story.sections].sort((a, b) => a.order - b.order);
+  if (phase === "empty" || phase === "error") {
+    return (
+      <>
+        <Header />
+        <main className="min-h-[50vh] bg-white pt-24">
+          <SectionContainer>
+            <div className="mx-auto max-w-lg text-center">
+              <h1 className="mb-4 font-display text-3xl font-bold text-gray-900">Our Story</h1>
+              <p className="mb-6 text-gray-600">
+                {phase === "error"
+                  ? "We could not load this page. Please try again in a moment."
+                  : "This page has not been published yet. Check back soon."}
+              </p>
+              <div className="flex flex-wrap justify-center gap-3">
+                <Link href="/">
+                  <Button variant="outline">Home</Button>
+                </Link>
+                <Link href="/shop">
+                  <Button>Shop</Button>
+                </Link>
+              </div>
+            </div>
+          </SectionContainer>
+        </main>
+        <Footer />
+      </>
+    );
+  }
+
+  if (!content) {
+    return (
+      <>
+        <Header />
+        <main className="min-h-[50vh] bg-white pt-24">
+          <SectionContainer>
+            <p className="text-center text-gray-600">Something went wrong loading this page.</p>
+          </SectionContainer>
+        </main>
+        <Footer />
+      </>
+    );
+  }
 
   return (
     <>
       <Header />
-      <main>
+      <main className="bg-white pt-24">
         <SectionContainer>
-          <div className="mb-12 text-center">
-            <h1 className="mb-4 font-display text-4xl font-bold text-[hsl(var(--text-primary))] sm:text-5xl">
-              {story.pageTitle}
+          <header className="mb-16 text-center sm:mb-20">
+            <h1 className="mb-4 font-display text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl md:text-6xl">
+              {content.heroTitle}
             </h1>
-            <p className="mx-auto max-w-2xl text-lg text-[hsl(var(--text-secondary))]">
-              {story.pageSubtitle}
-            </p>
-          </div>
+            <p className="mx-auto max-w-2xl text-lg text-gray-600 sm:text-xl">{content.heroSubtitle}</p>
+          </header>
 
-          {sortedSections.map((section) => renderSection(section))}
+          <section className="mb-20 grid items-center gap-10 lg:mb-28 lg:grid-cols-2 lg:gap-16">
+            <SectionImage imageUrl={content.section1.imageUrl} fetchPriority="high" />
+            <div className="space-y-4">
+              <h2 className="font-display text-3xl font-semibold text-gray-900 sm:text-4xl">
+                {content.section1.heading}
+              </h2>
+              <p className="text-lg leading-relaxed text-gray-600 whitespace-pre-line">{content.section1.body}</p>
+            </div>
+          </section>
+
+          <section className="mb-20 lg:mb-28">
+            <h2 className="mb-10 text-center font-display text-3xl font-semibold text-gray-900 sm:mb-12 sm:text-4xl">
+              Our Small Batch Promise
+            </h2>
+            <div className="grid gap-6 md:grid-cols-3">
+              {content.promises.map((card, index) => (
+                <Card
+                  key={index}
+                  className="border border-gray-100 bg-white shadow-md shadow-black/[0.04]"
+                >
+                  <CardContent className="p-6 sm:p-8">
+                    <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-crimson-50">
+                      <PromiseIcon icon={card.icon} />
+                    </div>
+                    <h3 className="mb-3 font-display text-lg font-semibold text-gray-900">{card.title}</h3>
+                    <p className="text-sm leading-relaxed text-gray-600 whitespace-pre-line">{card.body}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </section>
+
+          <section className="mb-20 grid items-center gap-10 lg:mb-28 lg:grid-cols-2 lg:gap-16">
+            <div className="order-2 space-y-4 lg:order-1">
+              <h2 className="font-display text-3xl font-semibold text-gray-900 sm:text-4xl">
+                {content.section2.heading}
+              </h2>
+              <p className="text-lg leading-relaxed text-gray-600 whitespace-pre-line">{content.section2.body}</p>
+            </div>
+            <div className="order-1 lg:order-2">
+              <SectionImage imageUrl={content.section2.imageUrl} fetchPriority="low" />
+            </div>
+          </section>
+
+          <div className="flex justify-center pb-8">
+            <CtaLink label={content.cta.label} href={content.cta.href} />
+          </div>
         </SectionContainer>
       </main>
       <Footer />

@@ -89,8 +89,8 @@ export function Header() {
         // Route bundle prefetch
         router.prefetch("/");
         router.prefetch("/shop");
-        router.prefetch("/recipes");
         router.prefetch("/story");
+        router.prefetch("/recipes");
         router.prefetch("/faq");
 
       } catch {

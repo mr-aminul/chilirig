@@ -9,11 +9,11 @@ import {
   Star,
   Home,
   ImageIcon,
-  BookOpen,
   HelpCircle,
   LogOut,
   Instagram,
   ChevronRight,
+  BookOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -33,20 +33,20 @@ type AdminSection = {
 /** Pages you touch less often — long-form content and reference material */
 const adminSectionsStable: AdminSection[] = [
   {
+    id: "story",
+    title: "Story",
+    description: "Our Story page content",
+    icon: BookOpen,
+    href: "/admin/story",
+    color: "text-primary",
+    bgColor: "bg-primary/10",
+  },
+  {
     id: "recipes",
     title: "Recipes",
     description: "Manage recipe content",
     icon: ChefHat,
     href: "/admin/recipes",
-    color: "text-primary",
-    bgColor: "bg-primary/10",
-  },
-  {
-    id: "story",
-    title: "Story",
-    description: "Manage your story page content",
-    icon: BookOpen,
-    href: "/admin/story",
     color: "text-primary",
     bgColor: "bg-primary/10",
   },

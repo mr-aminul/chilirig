@@ -16,8 +16,8 @@ export function HomePrefetch() {
     const runPrefetch = async () => {
       try {
         router.prefetch("/shop");
-        router.prefetch("/recipes");
         router.prefetch("/story");
+        router.prefetch("/recipes");
         router.prefetch("/faq");
 
         const [productsRes, recipesRes] = await Promise.all([

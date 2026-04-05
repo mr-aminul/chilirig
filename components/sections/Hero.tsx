@@ -122,13 +122,13 @@ export function Hero({ slides }: HeroProps) {
                     Shop Now
                   </Button>
                 </Link>
-                <Link href="/story">
+                <Link href="/recipes">
                   <Button 
                     variant="secondary" 
                     size="lg" 
                     className="w-full sm:w-auto"
                   >
-                    Our Story
+                    Recipes
                   </Button>
                 </Link>
               </div>

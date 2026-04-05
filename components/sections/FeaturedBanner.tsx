@@ -34,9 +34,9 @@ export function FeaturedBanner() {
             noodles, or dipping your favorite snacks, ChiliRig elevates every
             bite.
           </p>
-          <Link href="/story" className="inline-block pt-2">
+          <Link href="/recipes" className="inline-block pt-2">
             <Button size="lg" variant="default">
-              Read Our Story
+              Browse recipes
             </Button>
           </Link>
         </motion.div>
