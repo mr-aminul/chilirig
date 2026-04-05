@@ -9,7 +9,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { usePathname, useRouter } from "next/navigation";
 import { imageSrcForNext } from "@/lib/media-url";
-import { REMOTE_MEDIA_PLACEHOLDER } from "@/lib/remote-media-placeholder";
+import { NAVBAR_LOGO_URL } from "@/lib/remote-media-placeholder";
 
 const INACTIVITY_MS = 3000;
 const IDLE_CHECK_INTERVAL_MS = 500;
@@ -121,8 +121,8 @@ export function Header() {
               className="relative z-10 flex shrink-0 items-center group"
             >
               <Image
-                src={imageSrcForNext(REMOTE_MEDIA_PLACEHOLDER)}
-                alt="ChiliRig logo: dragon in a jar of red chilies"
+                src={imageSrcForNext(NAVBAR_LOGO_URL)}
+                alt="ChiliRig logo"
                 width={500}
                 height={500}
                 className="h-9 w-9 object-contain sm:h-10 sm:w-10"
