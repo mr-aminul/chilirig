@@ -1,5 +1,8 @@
 import Link from "next/link";
 
+/** Footer backdrop GIF from `public/images/giphy.gif`. */
+const FOOTER_BACKGROUND_IMAGE_URL = "/images/giphy.gif";
+
 const iconClass = "h-5 w-5";
 
 function SocialIcon({
@@ -59,14 +62,19 @@ export function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="border-t border-white/15 bg-black">
-      <div className="container-padding mx-auto pt-16 pb-0 md:pt-24 lg:pt-32">
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-3 lg:grid-cols-4">
-          <div className="space-y-4">
-            <h3 className="text-xl font-display font-bold text-white">
+    <footer
+      className="border-t border-white/15 bg-black bg-cover bg-bottom bg-no-repeat"
+      style={{
+        backgroundImage: `url(${FOOTER_BACKGROUND_IMAGE_URL})`,
+      }}
+    >
+      <div className="container-padding mx-auto pt-10 pb-0 md:pt-24 lg:pt-32">
+        <div className="grid grid-cols-2 gap-x-4 gap-y-6 md:grid-cols-3 md:gap-x-8 md:gap-y-8 lg:grid-cols-4 lg:gap-8">
+          <div className="col-span-2 space-y-2 md:col-span-1 md:space-y-4">
+            <h3 className="text-lg font-display font-bold text-white md:text-xl">
               ChiliRig
             </h3>
-            <p className="text-sm text-white/80">
+            <p className="text-xs leading-snug text-white/80 md:text-sm md:leading-normal">
               Blazing flavor, bottled for you. Crafted with real ingredients,
               slow-infused for depth. Heat with bite. Flavor without limits.
             </p>
@@ -110,9 +118,11 @@ export function Footer() {
             </div>
           </div>
 
-          <div className="space-y-4">
-            <h4 className="text-sm font-semibold text-white">Pages</h4>
-            <ul className="space-y-2 text-sm text-white/80">
+          <div className="space-y-2 md:space-y-4">
+            <h4 className="text-xs font-semibold text-white md:text-sm">
+              Pages
+            </h4>
+            <ul className="space-y-1 text-xs text-white/80 md:space-y-2 md:text-sm">
               <li>
                 <Link
                   href="/"
@@ -156,9 +166,11 @@ export function Footer() {
             </ul>
           </div>
 
-          <div className="space-y-4">
-            <h4 className="text-sm font-semibold text-white">Support</h4>
-            <ul className="space-y-2 text-sm text-white/80">
+          <div className="space-y-2 md:space-y-4">
+            <h4 className="text-xs font-semibold text-white md:text-sm">
+              Support
+            </h4>
+            <ul className="space-y-1 text-xs text-white/80 md:space-y-2 md:text-sm">
               <li>
                 <Link
                   href="/faq"
@@ -194,9 +206,11 @@ export function Footer() {
             </ul>
           </div>
 
-          <div className="space-y-4">
-            <h4 className="text-sm font-semibold text-white">Contact</h4>
-            <ul className="space-y-2 text-sm text-white/80">
+          <div className="col-span-2 space-y-2 md:col-span-1 md:space-y-4">
+            <h4 className="text-xs font-semibold text-white md:text-sm">
+              Contact
+            </h4>
+            <ul className="grid min-w-0 grid-cols-2 gap-x-4 gap-y-1 text-xs text-white/80 md:grid-cols-1 md:gap-y-2 md:text-sm [&_a]:break-words">
               <li>
                 <a
                   href="mailto:hello@chilirig.com"
@@ -237,7 +251,7 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-12 border-t border-white/15 pb-4 pt-8 text-center text-sm text-white/50">
+        <div className="mt-8 border-t border-white/15 pb-4 pt-5 text-center text-xs text-white/50 md:mt-12 md:pt-8 md:text-sm">
           <p>© {currentYear} ChiliRig. All rights reserved.</p>
         </div>
       </div>
