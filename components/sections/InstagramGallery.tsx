@@ -29,7 +29,7 @@ export function InstagramGallery({ content }: InstagramGalleryProps) {
         </h2>
         <p className="text-[hsl(var(--text-secondary))]">{content.subheading}</p>
       </div>
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+      <div className="flex flex-wrap justify-center gap-4">
         {tiles.map((image, index) => (
           <motion.a
             key={image.id}
@@ -40,14 +40,14 @@ export function InstagramGallery({ content }: InstagramGalleryProps) {
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.3, delay: index * 0.05 }}
-            className="group relative aspect-square overflow-hidden rounded-lg bg-gray-100 border border-black/10"
+            className="group relative aspect-square w-[calc(50%-0.5rem)] max-w-[280px] shrink-0 overflow-hidden rounded-lg border border-black/10 bg-gray-100 sm:w-[calc(33.333%-0.667rem)] sm:max-w-[260px] lg:w-48 lg:max-w-none"
           >
             <Image
               src={image.src}
               alt={image.alt}
               fill
               className="object-cover transition-transform duration-300 group-hover:scale-110"
-              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 16vw"
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 192px"
             />
             <div className="absolute inset-0 flex items-center justify-center bg-black/70 opacity-0 transition-opacity group-hover:opacity-100">
               <span className="text-sm font-semibold text-white">View</span>
