@@ -8,7 +8,15 @@ import { SectionContainer } from "@/components/SectionContainer";
 import { imageSrcForNext } from "@/lib/media-url";
 import { REMOTE_MEDIA_PLACEHOLDER } from "@/lib/remote-media-placeholder";
 
-export function FeaturedBanner() {
+type FeaturedBannerProps = {
+  imageUrl?: string;
+};
+
+export function FeaturedBanner({ imageUrl = "" }: FeaturedBannerProps) {
+  const resolvedSrc = imageUrl.trim()
+    ? imageSrcForNext(imageUrl)
+    : imageSrcForNext(REMOTE_MEDIA_PLACEHOLDER);
+
   return (
     <SectionContainer background="dark">
       <div className="grid gap-8 lg:grid-cols-2 lg:items-center lg:gap-12">
@@ -49,7 +57,7 @@ export function FeaturedBanner() {
         >
           <div className="relative h-full w-full rounded-2xl overflow-hidden bg-gray-100 border border-black/10 shadow-2xl">
             <Image
-              src={imageSrcForNext(REMOTE_MEDIA_PLACEHOLDER)}
+              src={resolvedSrc}
               alt="ChiliRig craftsmanship"
               fill
               className="object-cover"

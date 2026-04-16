@@ -13,6 +13,7 @@ import { Newsletter } from "@/components/sections/Newsletter";
 import { HomePrefetch } from "@/components/HomePrefetch";
 import { Product } from "@/data/products";
 import { defaultInstagramGalleryContent } from "@/data/instagram-gallery";
+import { getFeaturedBannerImageUrl } from "@/lib/featured-banner-content";
 import { getHeroContent } from "@/lib/hero-content";
 import { getInstagramGalleryContent } from "@/lib/instagram-gallery-content";
 import { getProducts } from "@/lib/products-db";
@@ -96,6 +97,13 @@ export default async function Home() {
   let instagramGallery = defaultInstagramGalleryContent;
   let categories: CategoryCardItem[] = [];
   let products: Product[] = [];
+  let featuredBannerImage = "";
+
+  try {
+    featuredBannerImage = await getFeaturedBannerImageUrl();
+  } catch (error) {
+    console.error("Failed to load featured banner image:", error);
+  }
 
   try {
     instagramGallery = await getInstagramGalleryContent();
@@ -120,7 +128,7 @@ export default async function Home() {
         <CategoryCards categories={categories} />
         <ProductGrid products={products} />
         <HowToEnjoy />
-        <FeaturedBanner />
+        <FeaturedBanner imageUrl={featuredBannerImage} />
         <RecipeTeaser />
         <SocialProof />
         <InstagramGallery content={instagramGallery} />

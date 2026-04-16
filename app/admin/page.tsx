@@ -14,6 +14,7 @@ import {
   Instagram,
   ChevronRight,
   BookOpen,
+  Flame,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -78,6 +79,15 @@ const adminSectionsFrequent: AdminSection[] = [
     description: "Manage homepage hero slides",
     icon: ImageIcon,
     href: "/admin/hero",
+    color: "text-primary",
+    bgColor: "bg-primary/10",
+  },
+  {
+    id: "featured-banner",
+    title: "Featured banner",
+    description: "“Grow your cravings” homepage image",
+    icon: Flame,
+    href: "/admin/featured-banner",
     color: "text-primary",
     bgColor: "bg-primary/10",
   },
