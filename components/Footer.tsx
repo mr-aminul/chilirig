@@ -1,7 +1,4 @@
-import Image from "next/image";
 import Link from "next/link";
-import { imageSrcForNext } from "@/lib/media-url";
-import { REMOTE_MEDIA_PLACEHOLDER } from "@/lib/remote-media-placeholder";
 
 const iconClass = "h-5 w-5";
 
@@ -62,19 +59,8 @@ export function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="relative overflow-hidden border-t border-white/15">
-      <div className="pointer-events-none absolute inset-0" aria-hidden>
-        <Image
-          src={imageSrcForNext(REMOTE_MEDIA_PLACEHOLDER)}
-          alt=""
-          fill
-          unoptimized
-          className="object-cover object-bottom"
-          sizes="100vw"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/90 via-black/78 to-black/55" />
-      </div>
-      <div className="relative z-10 container-padding mx-auto pt-16 pb-0 md:pt-24 lg:pt-32">
+    <footer className="border-t border-white/15 bg-black">
+      <div className="container-padding mx-auto pt-16 pb-0 md:pt-24 lg:pt-32">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3 lg:grid-cols-4">
           <div className="space-y-4">
             <h3 className="text-xl font-display font-bold text-white">
