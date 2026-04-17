@@ -23,23 +23,24 @@ const valueProps = [
   },
   {
     icon: Truck,
-    title: "Fast delivery",
-    description: "Ships within 24 hours. Free shipping on orders over ৳5,000. Fresh to your door.",
+    title: "Fresh at your door",
+    description:
+      "Delivery takes approximately 3–5 business days. Free shipping on orders over ৳5,000.",
   },
 ];
 
 export function ValueProps() {
   return (
     <SectionContainer>
-      <div className="mb-12 text-center">
-        <h2 className="mb-4 font-display text-3xl font-bold text-[hsl(var(--text-primary))] sm:text-4xl">
+      <div className="mb-8 text-center sm:mb-12">
+        <h2 className="mb-3 font-display text-2xl font-bold text-[hsl(var(--text-primary))] sm:mb-4 sm:text-3xl md:text-4xl">
           Our Small Batch Promise
         </h2>
-        <p className="text-[hsl(var(--text-secondary))]">
+        <p className="text-sm text-[hsl(var(--text-secondary))] sm:text-base">
           Crafted with care, delivered with passion
         </p>
       </div>
-      <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 sm:gap-8 lg:grid-cols-4">
         {valueProps.map((prop, index) => (
           <motion.div
             key={prop.title}
@@ -49,14 +50,14 @@ export function ValueProps() {
             transition={{ duration: 0.4, delay: index * 0.1 }}
           >
             <Card className="group h-full cursor-pointer transition-all duration-300 border-black/10 bg-white/80 hover:!bg-[hsl(var(--primary))] hover:!border-[hsl(var(--primary))] hover:!shadow-[hsl(var(--primary))]/20">
-              <CardContent className="p-6 text-center">
-                <div className="mb-4 inline-flex rounded-full bg-[hsl(var(--primary))]/10 border border-[hsl(var(--primary))]/20 p-4 transition-all duration-300 group-hover:!bg-white/20 group-hover:!border-white/30">
-                  <prop.icon className="h-6 w-6 text-[hsl(var(--primary))] transition-colors duration-300 group-hover:!text-white" />
+              <CardContent className="p-4 text-center sm:p-6">
+                <div className="mb-3 inline-flex rounded-full bg-[hsl(var(--primary))]/10 border border-[hsl(var(--primary))]/20 p-3 transition-all duration-300 group-hover:!bg-white/20 group-hover:!border-white/30 sm:mb-4 sm:p-4">
+                  <prop.icon className="h-5 w-5 text-[hsl(var(--primary))] transition-colors duration-300 group-hover:!text-white sm:h-6 sm:w-6" />
                 </div>
-                <h3 className="mb-2 font-display text-lg font-semibold text-[hsl(var(--text-primary))] transition-colors duration-300 group-hover:!text-white">
+                <h3 className="mb-1.5 font-display text-base font-semibold text-[hsl(var(--text-primary))] transition-colors duration-300 group-hover:!text-white sm:mb-2 sm:text-lg">
                   {prop.title}
                 </h3>
-                <p className="text-sm text-[hsl(var(--text-secondary))] transition-colors duration-300 group-hover:!text-white/90">
+                <p className="text-xs leading-snug text-[hsl(var(--text-secondary))] transition-colors duration-300 group-hover:!text-white/90 sm:text-sm sm:leading-normal">
                   {prop.description}
                 </p>
               </CardContent>
