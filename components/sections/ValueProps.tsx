@@ -25,7 +25,7 @@ const valueProps = [
     icon: Truck,
     title: "Fresh at your door",
     description:
-      "Delivery takes approximately 3–5 business days. Free shipping on orders over ৳5,000.",
+      "Delivery takes approximately 3–5 business days. Free shipping on orders over ৳1,500.",
   },
 ];
 

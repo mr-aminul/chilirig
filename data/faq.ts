@@ -25,7 +25,7 @@ export const faqs: FAQCategory[] = [
         id: "2",
         question: "Do you offer free shipping?",
         answer:
-          "Yes! Free shipping is available on all orders over ৳5,000. For orders under ৳5,000, standard shipping is ৳599.",
+          "Yes! Free shipping is available on all orders over ৳1,500. For orders under ৳1,500, standard shipping is ৳599.",
       },
       {
         id: "3",
