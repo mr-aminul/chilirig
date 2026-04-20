@@ -36,7 +36,7 @@ export function SocialProof() {
     <SectionContainer background="light">
       <div className="mb-12 text-center">
         <h2 className="mb-4 font-display text-3xl font-bold text-[hsl(var(--text-primary))] sm:text-4xl">
-          Voices of Our Community
+        Hear It From Our Community
         </h2>
         <div className="mb-4 flex items-center justify-center gap-2">
           <div className="flex items-center gap-1">
