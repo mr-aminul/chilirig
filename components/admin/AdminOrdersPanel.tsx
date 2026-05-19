@@ -2,10 +2,19 @@
 
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Loader2, Package, Truck } from "lucide-react";
+import { ArrowLeft, Ban, Loader2, Package, Search, Trash2, Truck } from "lucide-react";
+import { OrderConfirmDialog } from "@/components/admin/OrderConfirmDialog";
+import { isOrderCancelled } from "@/lib/order-status";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { formatPrice } from "@/lib/utils";
+
+export interface AdminOrderItem {
+  id?: string;
+  product_name: string;
+  unit_price: number;
+  quantity: number;
+}
 
 export interface AdminOrder {
   id: string;
@@ -18,16 +27,18 @@ export interface AdminOrder {
   city_name: string;
   zone_name: string;
   area_name: string;
+  subtotal: number;
   total: number;
   shipping: number;
   status: string | null;
   pathao_consignment_id: string | null;
   pathao_error: string | null;
   created_at?: string | null;
+  items: AdminOrderItem[];
 }
 
 function formatOrderDate(value?: string | null) {
-  if (!value) return "Unknown date";
+  if (!value) return "—";
 
   try {
     return new Date(value).toLocaleString("en-BD", {
@@ -42,21 +53,34 @@ function formatOrderDate(value?: string | null) {
   }
 }
 
-function statusBadgeLabel(order: AdminOrder) {
-  if (order.pathao_consignment_id) return "Sent to Pathao";
+function formatItemsSummary(items: AdminOrderItem[]) {
+  if (items.length === 0) return "—";
+  return items.map((item) => `${item.product_name} × ${item.quantity}`).join(", ");
+}
+
+function formatDeliveryAddress(order: AdminOrder) {
+  return [order.address, order.area_name, order.zone_name, order.city_name]
+    .filter(Boolean)
+    .join(", ");
+}
+
+function statusLabel(order: AdminOrder) {
+  if (isOrderCancelled(order.status)) return "Cancelled";
+  if (order.pathao_consignment_id) return "Pathao sent";
+  if (order.pathao_error) return "Pathao failed";
   return order.status || "Pending";
 }
 
-function statusBadgeVariant(order: AdminOrder): "default" | "secondary" | "outline" {
-  if (order.pathao_consignment_id) return "default";
-  if ((order.status || "").toLowerCase() === "new") return "secondary";
-  return "outline";
+function statusClass(order: AdminOrder) {
+  if (isOrderCancelled(order.status)) return "text-neutral-500";
+  if (order.pathao_consignment_id) return "text-green-700";
+  if (order.pathao_error) return "text-red-600";
+  if ((order.status || "").toLowerCase() === "new") return "text-amber-700";
+  return "text-neutral-600";
 }
 
 type AdminOrdersPanelProps = {
-  /** When true, omit page chrome (back link, outer full-height wrapper). */
   embedded?: boolean;
-  /** Called after a successful Pathao dispatch so parents can refresh badges, etc. */
   onOrdersChanged?: () => void;
 };
 
@@ -65,6 +89,17 @@ export function AdminOrdersPanel({ embedded = false, onOrdersChanged }: AdminOrd
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [dispatchingId, setDispatchingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [orderToDelete, setOrderToDelete] = useState<AdminOrder | null>(null);
+  const [orderToCancel, setOrderToCancel] = useState<AdminOrder | null>(null);
+  const [orderToDispatch, setOrderToDispatch] = useState<AdminOrder | null>(null);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [cancelConfirmText, setCancelConfirmText] = useState("");
+  const [search, setSearch] = useState("");
+
+  const DELETE_CONFIRM_WORD = "delete";
+  const CANCEL_CONFIRM_WORD = "cancel";
 
   const loadOrders = useCallback(async () => {
     setLoading(true);
@@ -78,7 +113,12 @@ export function AdminOrdersPanel({ embedded = false, onOrdersChanged }: AdminOrd
         throw new Error(data.error || "Failed to load orders");
       }
 
-      setOrders(data.orders ?? []);
+      setOrders(
+        (data.orders ?? []).map((order: AdminOrder) => ({
+          ...order,
+          items: order.items ?? [],
+        }))
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load orders");
     } finally {
@@ -91,9 +131,33 @@ export function AdminOrdersPanel({ embedded = false, onOrdersChanged }: AdminOrd
   }, [loadOrders]);
 
   const pendingCount = useMemo(
-    () => orders.filter((order) => !order.pathao_consignment_id).length,
+    () =>
+      orders.filter(
+        (order) => !order.pathao_consignment_id && !isOrderCancelled(order.status)
+      ).length,
     [orders]
   );
+
+  const filteredOrders = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return orders;
+
+    return orders.filter((order) => {
+      const haystack = [
+        order.order_number,
+        order.full_name,
+        order.email,
+        order.phone,
+        order.secondary_phone ?? "",
+        formatDeliveryAddress(order),
+        ...order.items.map((i) => i.product_name),
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      return haystack.includes(q);
+    });
+  }, [orders, search]);
 
   const handleDispatch = async (orderId: string) => {
     setDispatchingId(orderId);
@@ -106,7 +170,9 @@ export function AdminOrdersPanel({ embedded = false, onOrdersChanged }: AdminOrd
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error ? `[${response.status}] ${data.error}` : "Failed to send order to Pathao");
+        throw new Error(
+          data.error ? `[${response.status}] ${data.error}` : "Failed to send order to Pathao"
+        );
       }
 
       setOrders((current) =>
@@ -120,6 +186,7 @@ export function AdminOrdersPanel({ embedded = false, onOrdersChanged }: AdminOrd
             : order
         )
       );
+      setOrderToDispatch(null);
       onOrdersChanged?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to send order to Pathao");
@@ -129,236 +196,489 @@ export function AdminOrdersPanel({ embedded = false, onOrdersChanged }: AdminOrd
     }
   };
 
-  const inner = (
-    <main
-      className={
-        embedded
-          ? "w-full max-w-none py-0"
-          : "container mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8"
+  const closeDispatchDialog = () => {
+    setOrderToDispatch(null);
+  };
+
+  const closeDeleteDialog = () => {
+    setOrderToDelete(null);
+    setDeleteConfirmText("");
+  };
+
+  const handleDeleteOrder = async () => {
+    if (!orderToDelete || deleteConfirmText.trim() !== DELETE_CONFIRM_WORD) return;
+
+    const orderId = orderToDelete.id;
+    setDeletingId(orderId);
+    setError(null);
+
+    try {
+      const response = await fetch(`/api/admin/orders/${orderId}`, { method: "DELETE" });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to delete order");
       }
-    >
-      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          {!embedded && (
-            <div className="mb-3">
-              <Link href="/admin">
-                <Button variant="ghost" size="sm">
-                  <ArrowLeft className="h-4 w-4" />
-                  Back to admin
-                </Button>
-              </Link>
-            </div>
-          )}
-          <h1 className="font-display text-3xl font-bold">Orders</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            New orders stay here until you manually send them to Pathao.
-          </p>
-        </div>
 
-        <div className="flex items-center gap-3 rounded-xl border border-black/10 bg-white/80 px-4 py-3 sm:px-5">
-          <Truck className="h-8 w-8 shrink-0 text-primary" />
-          <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Pending dispatch
-            </p>
-            <p className="text-2xl font-bold tabular-nums">{pendingCount}</p>
+      setOrders((current) => current.filter((order) => order.id !== orderId));
+      closeDeleteDialog();
+      onOrdersChanged?.();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete order");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const closeCancelDialog = () => {
+    setOrderToCancel(null);
+    setCancelConfirmText("");
+  };
+
+  const handleCancelOrder = async () => {
+    if (!orderToCancel || cancelConfirmText.trim() !== CANCEL_CONFIRM_WORD) return;
+
+    const orderId = orderToCancel.id;
+    setCancellingId(orderId);
+    setError(null);
+
+    try {
+      const response = await fetch(`/api/admin/orders/${orderId}`, {
+        method: "PATCH",
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to cancel order");
+      }
+
+      setOrders((current) =>
+        current.map((order) =>
+          order.id === orderId ? { ...order, status: "cancelled", pathao_error: null } : order
+        )
+      );
+      closeCancelDialog();
+      onOrdersChanged?.();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to cancel order");
+    } finally {
+      setCancellingId(null);
+    }
+  };
+
+  const canConfirmDelete = deleteConfirmText.trim() === DELETE_CONFIRM_WORD;
+  const canConfirmCancel = cancelConfirmText.trim() === CANCEL_CONFIRM_WORD;
+
+  return (
+    <AdminOrdersPanelShell embedded={embedded}>
+      <header className="mb-4 flex flex-wrap items-end justify-between gap-4 border-b border-neutral-200 pb-4">
+        <PanelTitle embedded={embedded} pendingCount={pendingCount} />
+      </header>
+
+      {orders.length > 0 ? (
+        <div className="mb-3 flex flex-wrap items-center gap-3">
+          <div className="relative min-w-[220px] max-w-md flex-1">
+            <Search
+              className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400"
+              aria-hidden
+            />
+            <Input
+              type="search"
+              placeholder="Search orders…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="h-9 rounded border-neutral-300 bg-white pl-8 text-sm shadow-none"
+              aria-label="Search orders"
+            />
           </div>
+          {search.trim() ? (
+            <span className="text-sm text-neutral-500">
+              {filteredOrders.length} {filteredOrders.length === 1 ? "result" : "results"}
+            </span>
+          ) : null}
         </div>
-      </div>
+      ) : null}
 
-      {error && (
-        <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+      {error ? (
+        <div className="mb-3 border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
           {error}
         </div>
-      )}
+      ) : null}
 
       {loading ? (
-        <div className="flex min-h-64 items-center justify-center rounded-2xl border border-dashed">
-          <div className="flex items-center gap-3 text-muted-foreground">
-            <Loader2 className="h-5 w-5 animate-spin" />
-            Loading orders...
-          </div>
+        <div className="flex items-center justify-center gap-2 border border-neutral-200 bg-white py-16 text-sm text-neutral-500">
+          <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+          Loading orders…
         </div>
       ) : orders.length === 0 ? (
-        <div className="rounded-2xl border border-dashed px-6 py-16 text-center">
-          <Package className="mx-auto mb-4 h-10 w-10 text-muted-foreground" />
-          <h2 className="text-lg font-semibold">No orders yet</h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Orders placed from checkout will appear here.
-          </p>
-        </div>
+        <EmptyState />
+      ) : filteredOrders.length === 0 ? (
+        <NoSearchResults onClear={() => setSearch("")} />
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-black/10 bg-white/80 shadow-sm">
-          <table className="w-full min-w-[800px] border-collapse text-left text-xs leading-tight">
-            <thead>
-              <tr className="border-b border-black/10 bg-black/[0.03]">
-                <th
-                  scope="col"
-                  className="px-2 py-1.5 font-display text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
-                >
-                  Order
-                </th>
-                <th
-                  scope="col"
-                  className="px-2 py-1.5 font-display text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
-                >
-                  Date
-                </th>
-                <th
-                  scope="col"
-                  className="px-2 py-1.5 font-display text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
-                >
-                  Customer
-                </th>
-                <th
-                  scope="col"
-                  className="px-2 py-1.5 font-display text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
-                >
-                  Phone
-                </th>
-                <th
-                  scope="col"
-                  className="px-2 py-1.5 font-display text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
-                >
-                  Address
-                </th>
-                <th
-                  scope="col"
-                  className="px-2 py-1.5 text-right font-display text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
-                >
-                  Ship
-                </th>
-                <th
-                  scope="col"
-                  className="px-2 py-1.5 text-right font-display text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
-                >
-                  Total
-                </th>
-                <th
-                  scope="col"
-                  className="px-2 py-1.5 font-display text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
-                >
-                  Status
-                </th>
-                <th
-                  scope="col"
-                  className="px-2 py-1.5 font-display text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
-                >
-                  Pathao
-                </th>
-                <th
-                  scope="col"
-                  className="px-2 py-1.5 text-right font-display text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
-                >
-                  Action
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {orders.map((order) => {
-                const address = [order.address, order.area_name, order.zone_name, order.city_name]
-                  .filter(Boolean)
-                  .join(", ");
-                const isDispatching = dispatchingId === order.id;
-                const canDispatch = !order.pathao_consignment_id && !isDispatching;
-
-                return (
-                  <Fragment key={order.id}>
-                    <tr className="border-b border-black/10 align-middle transition-colors hover:bg-black/[0.02]">
-                      <td className="px-2 py-1.5 font-semibold tabular-nums">{order.order_number}</td>
-                      <td className="px-2 py-1.5 whitespace-nowrap text-muted-foreground">
-                        {formatOrderDate(order.created_at)}
-                      </td>
-                      <td className="px-2 py-1.5 max-w-[180px]">
-                        <div className="font-medium leading-none">{order.full_name}</div>
-                        <div className="truncate text-[10px] leading-tight text-muted-foreground" title={order.email}>
-                          {order.email}
-                        </div>
-                      </td>
-                      <td className="px-2 py-1.5 whitespace-nowrap">
-                        <div className="leading-none">{order.phone}</div>
-                        {order.secondary_phone ? (
-                          <div className="text-[10px] leading-tight text-muted-foreground">
-                            {order.secondary_phone}
-                          </div>
-                        ) : null}
-                      </td>
-                      <td className="px-2 py-1.5 max-w-[200px]">
-                        <p className="line-clamp-1 text-muted-foreground" title={address}>
-                          {address || "—"}
-                        </p>
-                      </td>
-                      <td className="px-2 py-1.5 text-right tabular-nums text-muted-foreground">
-                        {formatPrice(order.shipping || 0)}
-                      </td>
-                      <td className="px-2 py-1.5 text-right font-semibold tabular-nums">
-                        {formatPrice(order.total || 0)}
-                      </td>
-                      <td className="px-2 py-1.5">
-                        <Badge
-                          variant={statusBadgeVariant(order)}
-                          className="px-1.5 py-0 text-[10px] font-medium leading-none"
-                        >
-                          {statusBadgeLabel(order)}
-                        </Badge>
-                      </td>
-                      <td className="px-2 py-1.5 max-w-[120px]">
-                        <span
-                          className={`block truncate font-mono text-[10px] leading-none ${
-                            order.pathao_error ? "text-red-600" : "text-muted-foreground"
-                          }`}
-                          title={
-                            order.pathao_consignment_id ||
-                            (order.pathao_error ? order.pathao_error : undefined)
-                          }
-                        >
-                          {order.pathao_consignment_id || (order.pathao_error ? "Failed" : "—")}
-                        </span>
-                      </td>
-                      <td className="px-2 py-1.5 text-right">
-                        <Button
-                          size="sm"
-                          className="h-7 gap-1 whitespace-nowrap px-2 text-[11px]"
-                          onClick={() => void handleDispatch(order.id)}
-                          disabled={!canDispatch}
-                        >
-                          {isDispatching ? (
-                            <>
-                              <Loader2 className="h-3 w-3 shrink-0 animate-spin" aria-hidden />
-                              Sending
-                            </>
-                          ) : order.pathao_consignment_id ? (
-                            "Sent"
-                          ) : (
-                            <>
-                              <Truck className="h-3 w-3 shrink-0" />
-                              Pathao
-                            </>
-                          )}
-                        </Button>
-                      </td>
-                    </tr>
-                    {order.pathao_error ? (
-                      <tr className="border-b border-black/10 bg-red-50/80">
-                        <td colSpan={10} className="px-2 py-1 text-[10px] leading-snug text-red-800">
-                          <span className="font-semibold">Pathao error: </span>
-                          {order.pathao_error}
-                        </td>
-                      </tr>
-                    ) : null}
-                  </Fragment>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <OrdersTable
+          orders={filteredOrders}
+          dispatchingId={dispatchingId}
+          deletingId={deletingId}
+          cancellingId={cancellingId}
+          onRequestDispatch={(order) => setOrderToDispatch(order)}
+          onRequestCancel={(order) => {
+            setOrderToCancel(order);
+            setCancelConfirmText("");
+          }}
+          onRequestDelete={(order) => {
+            setOrderToDelete(order);
+            setDeleteConfirmText("");
+          }}
+        />
       )}
-    </main>
+
+      {orderToDelete ? (
+        <OrderConfirmDialog
+          variant="delete"
+          order={orderToDelete}
+          confirmText={deleteConfirmText}
+          onConfirmTextChange={setDeleteConfirmText}
+          confirmWord={DELETE_CONFIRM_WORD}
+          canConfirm={canConfirmDelete}
+          isSubmitting={deletingId === orderToDelete.id}
+          onDismiss={closeDeleteDialog}
+          onConfirm={() => void handleDeleteOrder()}
+        />
+      ) : null}
+
+      {orderToCancel ? (
+        <OrderConfirmDialog
+          variant="cancel"
+          order={orderToCancel}
+          confirmText={cancelConfirmText}
+          onConfirmTextChange={setCancelConfirmText}
+          confirmWord={CANCEL_CONFIRM_WORD}
+          canConfirm={canConfirmCancel}
+          isSubmitting={cancellingId === orderToCancel.id}
+          onDismiss={closeCancelDialog}
+          onConfirm={() => void handleCancelOrder()}
+        />
+      ) : null}
+
+      {orderToDispatch ? (
+        <OrderConfirmDialog
+          variant="pathao"
+          order={orderToDispatch}
+          isSubmitting={dispatchingId === orderToDispatch.id}
+          onDismiss={closeDispatchDialog}
+          onConfirm={() => void handleDispatch(orderToDispatch.id)}
+        />
+      ) : null}
+    </AdminOrdersPanelShell>
   );
+}
 
-  if (embedded) {
-    return <div className="bg-background">{inner}</div>;
-  }
+function AdminOrdersPanelShell({
+  embedded,
+  children,
+}: {
+  embedded: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className={embedded ? "bg-background" : "min-h-screen bg-neutral-50"}>
+      <main
+        className={
+          embedded
+            ? "w-full max-w-none py-0"
+            : "container mx-auto max-w-[1600px] px-4 py-8 sm:px-6 lg:px-8"
+        }
+      >
+        {children}
+      </main>
+    </div>
+  );
+}
 
-  return <div className="min-h-screen bg-background">{inner}</div>;
+function PanelTitle({ embedded, pendingCount }: { embedded: boolean; pendingCount: number }) {
+  return (
+    <div>
+      {!embedded ? (
+        <div className="mb-2">
+          <Link href="/admin">
+            <Button variant="ghost" size="sm" className="h-8 px-2 text-neutral-600">
+              <ArrowLeft className="h-4 w-4" />
+              Back
+            </Button>
+          </Link>
+        </div>
+      ) : null}
+      <h1 className="text-xl font-semibold text-neutral-900">Orders</h1>
+      <p className="mt-0.5 text-sm text-neutral-500">{pendingCount} pending Pathao dispatch</p>
+    </div>
+  );
+}
+
+function EmptyState() {
+  return (
+    <div className="border border-dashed border-neutral-300 bg-white py-16 text-center">
+      <Package className="mx-auto mb-3 h-8 w-8 text-neutral-400" aria-hidden />
+      <p className="font-medium text-neutral-800">No orders yet</p>
+      <p className="mt-1 text-sm text-neutral-500">Checkout orders will show up here.</p>
+    </div>
+  );
+}
+
+function NoSearchResults({ onClear }: { onClear: () => void }) {
+  return (
+    <div className="border border-neutral-200 bg-white py-12 text-center text-sm text-neutral-500">
+      No matches.{" "}
+      <button type="button" className="text-primary underline" onClick={onClear}>
+        Clear search
+      </button>
+    </div>
+  );
+}
+
+function OrdersTable({
+  orders,
+  dispatchingId,
+  deletingId,
+  cancellingId,
+  onRequestDispatch,
+  onRequestCancel,
+  onRequestDelete,
+}: {
+  orders: AdminOrder[];
+  dispatchingId: string | null;
+  deletingId: string | null;
+  cancellingId: string | null;
+  onRequestDispatch: (order: AdminOrder) => void;
+  onRequestCancel: (order: AdminOrder) => void;
+  onRequestDelete: (order: AdminOrder) => void;
+}) {
+  return (
+    <div className="overflow-x-auto border border-neutral-200 bg-white">
+      <table className="w-full min-w-[960px] border-collapse text-left text-sm">
+        <thead>
+          <tr className="border-b border-neutral-200 bg-neutral-50 text-xs font-medium uppercase tracking-wide text-neutral-500">
+            <th className="px-3 py-2.5">Order</th>
+            <th className="px-3 py-2.5">Date</th>
+            <th className="px-3 py-2.5">Customer</th>
+            <th className="px-3 py-2.5">Phone</th>
+            <th className="min-w-[200px] px-3 py-2.5">Items</th>
+            <th className="px-3 py-2.5">Address</th>
+            <th className="px-3 py-2.5 text-right">Amount</th>
+            <th className="px-3 py-2.5">Status</th>
+            <th className="px-3 py-2.5 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-neutral-100">
+          {orders.map((order) => (
+            <OrdersTableRow
+              key={order.id}
+              order={order}
+              isDispatching={dispatchingId === order.id}
+              isDeleting={deletingId === order.id}
+              isCancelling={cancellingId === order.id}
+              onRequestDispatch={() => onRequestDispatch(order)}
+              onRequestCancel={() => onRequestCancel(order)}
+              onRequestDelete={() => onRequestDelete(order)}
+            />
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function OrderAmountBreakdown({ order }: { order: AdminOrder }) {
+  const subtotal = order.subtotal ?? 0;
+  const shipping = order.shipping ?? 0;
+
+  return (
+    <div className="tabular-nums">
+      <p className="font-medium text-neutral-900">{formatPrice(subtotal)}</p>
+      {shipping > 0 ? (
+        <p className="mt-0.5 pl-2 text-xs text-neutral-500">+ {formatPrice(shipping)} shipping</p>
+      ) : null}
+    </div>
+  );
+}
+
+function OrdersTableRow({
+  order,
+  isDispatching,
+  isDeleting,
+  isCancelling,
+  onRequestDispatch,
+  onRequestCancel,
+  onRequestDelete,
+}: {
+  order: AdminOrder;
+  isDispatching: boolean;
+  isDeleting: boolean;
+  isCancelling: boolean;
+  onRequestDispatch: () => void;
+  onRequestCancel: () => void;
+  onRequestDelete: () => void;
+}) {
+  const cancelled = isOrderCancelled(order.status);
+  const actionsDisabled = isDispatching || isDeleting || isCancelling;
+  const canDispatch = !cancelled && !order.pathao_consignment_id && !isDispatching;
+  const canCancel = !cancelled;
+  const itemsSummary = formatItemsSummary(order.items);
+  const address = formatDeliveryAddress(order);
+
+  return (
+    <Fragment>
+      <tr
+        className={`align-top hover:bg-neutral-50/80 ${cancelled ? "bg-neutral-50/90 text-neutral-500" : ""}`}
+      >
+        <td className="px-3 py-2.5 font-medium tabular-nums text-neutral-900">
+          {order.order_number}
+        </td>
+        <td className="whitespace-nowrap px-3 py-2.5 text-neutral-600">
+          {formatOrderDate(order.created_at)}
+        </td>
+        <td className="max-w-[160px] px-3 py-2.5">
+          <div className="font-medium text-neutral-900">{order.full_name}</div>
+          <div className="truncate text-xs text-neutral-500" title={order.email}>
+            {order.email}
+          </div>
+        </td>
+        <td className="whitespace-nowrap px-3 py-2.5 text-neutral-700">
+          <div>{order.phone}</div>
+          {order.secondary_phone ? (
+            <div className="text-xs text-neutral-500">{order.secondary_phone}</div>
+          ) : null}
+        </td>
+        <td className="max-w-[240px] px-3 py-2.5 text-neutral-700">
+          <p className="line-clamp-2" title={itemsSummary}>
+            {itemsSummary}
+          </p>
+        </td>
+        <td className="max-w-[200px] px-3 py-2.5 text-neutral-600">
+          <p className="line-clamp-2" title={address}>
+            {address || "—"}
+          </p>
+        </td>
+        <td className="whitespace-nowrap px-3 py-2.5 text-right">
+          <OrderAmountBreakdown order={order} />
+        </td>
+        <td className="px-3 py-2.5">
+          <span className={`text-xs font-medium ${statusClass(order)}`}>{statusLabel(order)}</span>
+          {order.pathao_consignment_id ? (
+            <p
+              className="mt-0.5 max-w-[120px] truncate font-mono text-[10px] text-neutral-400"
+              title={order.pathao_consignment_id}
+            >
+              {order.pathao_consignment_id}
+            </p>
+          ) : null}
+        </td>
+        <td className="px-3 py-2.5">
+          <OrdersTableActions
+            order={order}
+            isDispatching={isDispatching}
+            isDeleting={isDeleting}
+            isCancelling={isCancelling}
+            actionsDisabled={actionsDisabled}
+            canDispatch={canDispatch}
+            canCancel={canCancel}
+            onRequestDispatch={onRequestDispatch}
+            onRequestCancel={onRequestCancel}
+            onRequestDelete={onRequestDelete}
+          />
+        </td>
+      </tr>
+      {order.pathao_error ? (
+        <tr className="bg-red-50">
+          <td colSpan={9} className="px-3 py-1.5 text-xs text-red-700">
+            Pathao: {order.pathao_error}
+          </td>
+        </tr>
+      ) : null}
+    </Fragment>
+  );
+}
+
+function OrdersTableActions({
+  order,
+  isDispatching,
+  isDeleting,
+  isCancelling,
+  actionsDisabled,
+  canDispatch,
+  canCancel,
+  onRequestDispatch,
+  onRequestCancel,
+  onRequestDelete,
+}: {
+  order: AdminOrder;
+  isDispatching: boolean;
+  isDeleting: boolean;
+  isCancelling: boolean;
+  actionsDisabled: boolean;
+  canDispatch: boolean;
+  canCancel: boolean;
+  onRequestDispatch: () => void;
+  onRequestCancel: () => void;
+  onRequestDelete: () => void;
+}) {
+  return (
+    <div className="flex items-center justify-end gap-1">
+      <Button
+        type="button"
+        size="sm"
+        variant="ghost"
+        className="h-8 rounded px-2 text-xs font-normal text-neutral-700 hover:bg-neutral-100"
+        onClick={onRequestDispatch}
+        disabled={!canDispatch || actionsDisabled}
+        title={
+          isOrderCancelled(order.status)
+            ? "Order is cancelled"
+            : order.pathao_consignment_id
+              ? "Already sent to Pathao"
+              : "Send to Pathao"
+        }
+      >
+        {isDispatching ? (
+          <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+        ) : (
+          <Truck className="h-3.5 w-3.5" aria-hidden />
+        )}
+        <span className="ml-1 hidden lg:inline">
+          {order.pathao_consignment_id ? "Sent" : "Pathao"}
+        </span>
+      </Button>
+      <Button
+        type="button"
+        size="sm"
+        variant="ghost"
+        className="h-8 rounded px-2 text-neutral-600 hover:bg-amber-50 hover:text-amber-800"
+        onClick={onRequestCancel}
+        disabled={!canCancel || actionsDisabled}
+        aria-label={`Cancel ${order.order_number}`}
+        title="Cancel order (keeps record)"
+      >
+        {isCancelling ? (
+          <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+        ) : (
+          <Ban className="h-3.5 w-3.5" aria-hidden />
+        )}
+      </Button>
+      <Button
+        type="button"
+        size="sm"
+        variant="ghost"
+        className="h-8 rounded px-2 text-neutral-500 hover:bg-red-50 hover:text-red-600"
+        onClick={onRequestDelete}
+        disabled={actionsDisabled}
+        aria-label={`Delete ${order.order_number}`}
+        title="Delete order permanently"
+      >
+        {isDeleting ? (
+          <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+        ) : (
+          <Trash2 className="h-3.5 w-3.5" aria-hidden />
+        )}
+      </Button>
+    </div>
+  );
 }

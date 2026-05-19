@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { notifyDiscordNewOrder } from "@/lib/discord-orders";
 import { normalizePathaoPhone } from "@/lib/pathao";
 import { getSupabaseAdmin } from "@/lib/supabase-server";
 
@@ -195,6 +196,26 @@ export async function POST(request: NextRequest) {
       // No sheet configured: log only (useful for local/dev)
       console.log("[Orders] No GOOGLE_SCRIPT_ORDERS_URL; order logged:", row);
     }
+
+    await notifyDiscordNewOrder({
+      orderId,
+      fullName,
+      email,
+      phone: recipientPhone,
+      secondaryPhone: secondaryPhone ? normalizePathaoPhone(secondaryPhone) : undefined,
+      address,
+      cityName: city_name,
+      zoneName: zone_name,
+      areaName: area_name,
+      items: items.map((item) => ({
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+      })),
+      subtotal,
+      shipping: shippingCost,
+      total,
+    });
 
     return NextResponse.json({
       success: true,

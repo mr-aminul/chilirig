@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
+import { ORDER_STATUS_CANCELLED } from "@/lib/order-status";
 import { getSupabaseAdmin } from "@/lib/supabase-server";
 
 const NO_STORE = { "Cache-Control": "no-store, max-age=0" };
@@ -14,7 +15,8 @@ export async function GET(request: NextRequest) {
     const { count, error } = await supabase
       .from("orders")
       .select("id", { count: "exact", head: true })
-      .is("pathao_consignment_id", null);
+      .is("pathao_consignment_id", null)
+      .neq("status", ORDER_STATUS_CANCELLED);
 
     if (error) {
       console.error("Pending order count error:", error);

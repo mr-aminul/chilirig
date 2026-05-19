@@ -247,7 +247,7 @@ export default function AdminDashboard() {
         <Tabs
           value={adminTab}
           onValueChange={(value) => setAdminTab(value as "controls" | "orders")}
-          className="w-full max-w-6xl"
+          className="w-full max-w-[1600px]"
         >
           <TabsList className="mb-6 w-full max-w-md sm:w-auto" aria-label="Admin sections">
             <TabsTrigger

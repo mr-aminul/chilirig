@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
 import { createPathaoOrder, normalizePathaoPhone } from "@/lib/pathao";
+import { isOrderCancelled } from "@/lib/order-status";
 import { getSupabaseAdmin } from "@/lib/supabase-server";
 
 interface RouteContext {
@@ -42,6 +43,13 @@ export async function POST(request: NextRequest, context: RouteContext) {
     if (order.pathao_consignment_id) {
       return NextResponse.json(
         { success: false, error: "Order already sent to Pathao" },
+        { status: 409 }
+      );
+    }
+
+    if (isOrderCancelled(order.status)) {
+      return NextResponse.json(
+        { success: false, error: "Cancelled orders cannot be sent to Pathao" },
         { status: 409 }
       );
     }
