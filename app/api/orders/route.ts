@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { notifyDiscordNewOrder } from "@/lib/discord-orders";
+import { generateOrderNumber } from "@/lib/order-number";
 import { normalizePathaoPhone } from "@/lib/pathao";
 import { getSupabaseAdmin } from "@/lib/supabase-server";
+
+// Pathao rejects deliveries whose full address (street + area + zone + city)
+// exceeds 220 characters, so reject those before the order is ever stored.
+const PATHAO_ADDRESS_MAX_LENGTH = 220;
 
 export interface OrderItemPayload {
   id: string;
@@ -54,13 +59,6 @@ const orderPayloadSchema = z.object({
   total: z.number().nonnegative(),
 });
 
-function generateOrderId(): string {
-  const date = new Date();
-  const dateStr = date.toISOString().slice(0, 10).replace(/-/g, "");
-  const random = Math.random().toString(36).slice(2, 6).toUpperCase();
-  return `CR-${dateStr}-${random}`;
-}
-
 export async function POST(request: NextRequest) {
   try {
     const parsed = orderPayloadSchema.safeParse(await request.json());
@@ -102,7 +100,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const orderId = generateOrderId();
+    const combinedAddress = [address.trim(), area_name, zone_name, city_name]
+      .filter(Boolean)
+      .join(", ");
+    if (combinedAddress.length > PATHAO_ADDRESS_MAX_LENGTH) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Delivery address is too long (${combinedAddress.length} characters). Please keep it under ${PATHAO_ADDRESS_MAX_LENGTH} characters.`,
+        },
+        { status: 400 }
+      );
+    }
+
+    const orderId = generateOrderNumber();
     const itemsSummary = items.map((i) => `${i.name} × ${i.quantity}`).join(" | ");
     const shippingCost = typeof shipping === "number" ? shipping : 0;
 

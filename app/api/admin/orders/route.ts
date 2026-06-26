@@ -29,6 +29,35 @@ function mapOrder(row: OrderRow) {
   };
 }
 
+async function attachPathaoCancelledAt(
+  supabase: ReturnType<typeof getSupabaseAdmin>,
+  orders: ReturnType<typeof mapOrder>[]
+) {
+  if (orders.length === 0) return orders;
+
+  // Queried separately so a missing column (pre-migration) never breaks the
+  // orders list. See scripts/add_pathao_cancelled_at.sql.
+  const { data, error } = await supabase
+    .from("orders")
+    .select("id, pathao_cancelled_at")
+    .in(
+      "id",
+      orders.map((o) => o.id as string)
+    );
+
+  if (error || !data) return orders;
+
+  const cancelledAtById = new Map<string, string | null>();
+  for (const row of data as { id: string; pathao_cancelled_at: string | null }[]) {
+    cancelledAtById.set(row.id, row.pathao_cancelled_at);
+  }
+
+  return orders.map((order) => ({
+    ...order,
+    pathao_cancelled_at: cancelledAtById.get(order.id as string) ?? null,
+  }));
+}
+
 async function attachOrderItems(
   supabase: ReturnType<typeof getSupabaseAdmin>,
   orders: OrderRow[]
@@ -117,6 +146,8 @@ export async function GET(request: NextRequest) {
     } else {
       orders = (result.data ?? []).map((row) => mapOrder(row as OrderRow));
     }
+
+    orders = await attachPathaoCancelledAt(supabase, orders);
 
     return NextResponse.json({
       success: true,

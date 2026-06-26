@@ -28,6 +28,10 @@ interface PathaoArea {
   area_name: string;
 }
 
+// Pathao rejects deliveries whose full address (street + area + zone + city)
+// exceeds 220 characters, so checkout must keep the combined value within it.
+const PATHAO_ADDRESS_MAX_LENGTH = 220;
+
 type CheckoutFieldKey =
   | "cityId"
   | "zoneId"
@@ -80,6 +84,17 @@ export default function CheckoutPage() {
   >({});
 
   const cartWeightKg = Math.max(0.5, items.reduce((sum, i) => sum + i.quantity * 0.5, 0));
+
+  // The dispatch step joins street + area + zone + city with ", ". Reserve space
+  // for that suffix so the street field can never push the total past Pathao's limit.
+  const addressSuffix = [formData.areaName, formData.zoneName, formData.cityName]
+    .filter(Boolean)
+    .join(", ");
+  const addressMaxLength = Math.max(
+    0,
+    PATHAO_ADDRESS_MAX_LENGTH - (addressSuffix ? addressSuffix.length + 2 : 0)
+  );
+  const addressRemaining = addressMaxLength - formData.address.length;
 
   const formatFieldList = (fields: string[]) => {
     if (fields.length <= 1) return fields[0] ?? "";
@@ -156,6 +171,22 @@ export default function CheckoutPage() {
           field: "secondaryPhone" as const,
         };
       }
+    }
+
+    const combinedAddress = [
+      formData.address.trim(),
+      formData.areaName,
+      formData.zoneName,
+      formData.cityName,
+    ]
+      .filter(Boolean)
+      .join(", ");
+    if (combinedAddress.length > PATHAO_ADDRESS_MAX_LENGTH) {
+      return {
+        title: "Shorten your delivery address",
+        message: `Your full address is ${combinedAddress.length} characters, but Pathao allows at most ${PATHAO_ADDRESS_MAX_LENGTH}. Please trim the Detailed address field (avoid repeating your name, phone, or the city/zone). We’ve taken you there now.`,
+        field: "address" as const,
+      };
     }
 
     if (shippingPriceLoading) {
@@ -689,11 +720,26 @@ export default function CheckoutPage() {
                         placeholder="Detailed address, house/road/block, landmark"
                         value={formData.address}
                         onChange={(e) =>
-                          setFormData({ ...formData, address: e.target.value })
+                          setFormData({
+                            ...formData,
+                            address: e.target.value.slice(0, addressMaxLength),
+                          })
                         }
                         required
+                        maxLength={addressMaxLength}
+                        aria-describedby="address-counter"
                         className="h-11 text-sm"
                       />
+                      <p
+                        id="address-counter"
+                        className={`mt-1 text-right text-xs ${
+                          addressRemaining <= 20 ? "text-destructive" : "text-muted-foreground"
+                        }`}
+                      >
+                        {addressRemaining >= 0
+                          ? `${addressRemaining} characters left`
+                          : `Remove ${-addressRemaining} characters`}
+                      </p>
                     </div>
                   </CardContent>
                 </Card>

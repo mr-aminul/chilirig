@@ -5,14 +5,20 @@ import { createPortal } from "react-dom";
 import { Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { isOrderCancelled } from "@/lib/order-status";
 
-export type OrderConfirmDialogVariant = "delete" | "cancel" | "pathao";
+export type OrderConfirmDialogVariant = "delete" | "cancel" | "pathao" | "recreate";
 
 const COPY: Record<
   OrderConfirmDialogVariant,
   {
     title: string;
-    description: (orderNumber: string, fullName: string) => string;
+    description: (
+      orderNumber: string,
+      fullName: string,
+      pathaoConsignmentId?: string | null,
+      status?: string | null
+    ) => string;
     confirmWordClass: string;
     confirmButtonClass: string;
     confirmLabel: string;
@@ -21,8 +27,20 @@ const COPY: Record<
 > = {
   delete: {
     title: "Delete order?",
-    description: (orderNumber, fullName) =>
-      `This permanently removes order ${orderNumber} for ${fullName}. This cannot be undone.`,
+    description: (
+      orderNumber,
+      fullName,
+      pathaoConsignmentId,
+      status
+    ) => {
+      if (pathaoConsignmentId && isOrderCancelled(status)) {
+        return `This permanently removes order ${orderNumber} for ${fullName} and cancels the active Pathao shipment (${pathaoConsignmentId}). If the parcel has already been picked up, Pathao may reject the cancellation. This cannot be undone.`;
+      }
+      if (pathaoConsignmentId) {
+        return `This permanently removes order ${orderNumber} for ${fullName} and cancels the Pathao shipment (${pathaoConsignmentId}). If the parcel has already been picked up, Pathao may reject the cancellation. This cannot be undone.`;
+      }
+      return `This permanently removes order ${orderNumber} for ${fullName}. This cannot be undone.`;
+    },
     confirmWordClass: "bg-red-50 text-red-700",
     confirmButtonClass:
       "border-red-600/20 bg-red-600 text-white shadow-red-600/20 hover:bg-red-700 hover:shadow-red-600/30",
@@ -31,8 +49,20 @@ const COPY: Record<
   },
   cancel: {
     title: "Cancel order?",
-    description: (orderNumber, fullName) =>
-      `Order ${orderNumber} for ${fullName} will stay in the list with status cancelled. It will not be sent to Pathao.`,
+    description: (
+      orderNumber,
+      fullName,
+      pathaoConsignmentId,
+      status
+    ) => {
+      if (pathaoConsignmentId && isOrderCancelled(status)) {
+        return `Order ${orderNumber} for ${fullName} is cancelled locally, but the Pathao shipment (${pathaoConsignmentId}) is still active. Confirm to cancel it on Pathao. If the parcel has already been picked up, Pathao may reject the cancellation.`;
+      }
+      if (pathaoConsignmentId) {
+        return `Order ${orderNumber} for ${fullName} will be marked cancelled and the Pathao shipment (${pathaoConsignmentId}) will be cancelled. If the parcel has already been picked up, Pathao may reject the cancellation.`;
+      }
+      return `Order ${orderNumber} for ${fullName} will stay in the list with status cancelled. It will not be sent to Pathao.`;
+    },
     confirmWordClass: "bg-amber-50 text-amber-800",
     confirmButtonClass:
       "border-amber-600/20 bg-amber-600 text-white shadow-amber-600/20 hover:bg-amber-700 hover:shadow-amber-600/30",
@@ -49,6 +79,16 @@ const COPY: Record<
     confirmLabel: "Send to Pathao",
     loadingLabel: "Sending…",
   },
+  recreate: {
+    title: "Re-create this order?",
+    description: (orderNumber, fullName) =>
+      `Create a new order for ${fullName} using the same items and delivery details as ${orderNumber}. The new order will be ready to send to Pathao.`,
+    confirmWordClass: "",
+    confirmButtonClass:
+      "border-primary/20 bg-[hsl(var(--primary))] text-white shadow-[hsl(var(--primary))]/20 hover:bg-[hsl(var(--primary-hover))]",
+    confirmLabel: "Re-create order",
+    loadingLabel: "Re-creating…",
+  },
 };
 
 type OrderConfirmDialogProps = {
@@ -56,6 +96,8 @@ type OrderConfirmDialogProps = {
   order: {
     order_number: string;
     full_name: string;
+    pathao_consignment_id?: string | null;
+    status?: string | null;
   };
   isSubmitting: boolean;
   onDismiss: () => void;
@@ -81,7 +123,7 @@ export function OrderConfirmDialog({
   const copy = COPY[variant];
   const titleId = `${variant}-order-title`;
   const inputId = `${variant}-order-confirm`;
-  const needsTypedConfirm = variant !== "pathao";
+  const needsTypedConfirm = variant === "delete" || variant === "cancel";
   const canSubmit = needsTypedConfirm ? Boolean(canConfirm) : true;
 
   useEffect(() => {
@@ -124,7 +166,12 @@ export function OrderConfirmDialog({
               {copy.title}
             </h2>
             <p className="mt-2 text-sm leading-relaxed text-neutral-600">
-              {copy.description(order.order_number, order.full_name)}
+              {copy.description(
+                order.order_number,
+                order.full_name,
+                order.pathao_consignment_id,
+                order.status
+              )}
             </p>
           </div>
           <Button

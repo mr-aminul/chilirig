@@ -75,6 +75,35 @@ export interface PathaoCreateOrderResponse {
   };
 }
 
+export interface PathaoCancelOrderResponse {
+  message: string;
+  type: string;
+  code: number;
+  data?: unknown;
+}
+
+export interface PathaoCancelOrderResult {
+  alreadyCancelled: boolean;
+}
+
+export interface PathaoOrderInfo {
+  consignment_id: string;
+  merchant_order_id?: string | null;
+  order_status: string;
+  order_status_slug: string;
+}
+
+/**
+ * Pathao reports a cancelled consignment with a status slug such as
+ * "Pickup_Cancelled" / "Cancelled". Used to treat retries as success and to
+ * distinguish "already cancelled" from "no longer cancellable" (picked up).
+ */
+function isCancelledOrderStatus(info: PathaoOrderInfo): boolean {
+  const slug = (info.order_status_slug || "").toLowerCase();
+  const status = (info.order_status || "").toLowerCase();
+  return slug.includes("cancel") || status.includes("cancel");
+}
+
 function getBaseUrl(): string {
   return process.env.PATHAO_BASE_URL || DEFAULT_BASE_URL;
 }
@@ -176,6 +205,87 @@ export async function createPathaoOrder(
   }
 
   return data as PathaoCreateOrderResponse;
+}
+
+/**
+ * Get the current status of a consignment.
+ * @see GET /aladdin/api/v1/orders/{consignmentId}/info
+ */
+export async function getPathaoOrderInfo(consignmentId: string): Promise<PathaoOrderInfo> {
+  const trimmedId = consignmentId.trim();
+  if (!trimmedId) {
+    throw new Error("Pathao consignment ID is required");
+  }
+  return pathaoGet<PathaoOrderInfo>(
+    `${ORDERS_PATH}/${encodeURIComponent(trimmedId)}/info`
+  );
+}
+
+/**
+ * Cancel an existing Pathao consignment.
+ * @see PUT /aladdin/api/v1/orders/{consignmentId}/cancel
+ *
+ * If Pathao rejects the cancel, we check the order's actual status: an order
+ * already in a cancelled state is treated as success (idempotent retry), while
+ * any other state (e.g. picked up / in transit) is surfaced as a real error.
+ */
+export async function cancelPathaoOrder(
+  consignmentId: string
+): Promise<PathaoCancelOrderResult> {
+  const trimmedId = consignmentId.trim();
+  if (!trimmedId) {
+    throw new Error("Pathao consignment ID is required");
+  }
+
+  const base = getBaseUrl();
+  const token = await getPathaoAccessToken();
+
+  // Pathao's cancel endpoint requires PUT. POST returns a misleading
+  // 200 body of {"error":true,"success":true,"message":"Unauthorized!"}.
+  const res = await fetch(
+    `${base}${ORDERS_PATH}/${encodeURIComponent(trimmedId)}/cancel`,
+    {
+      method: "PUT",
+      cache: "no-store",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  const text = await res.text();
+  let data: PathaoCancelOrderResponse & { message?: string; type?: string };
+  try {
+    data = JSON.parse(text) as PathaoCancelOrderResponse & { message?: string; type?: string };
+  } catch {
+    throw new Error(`Pathao cancel order failed (${res.status}): ${text.slice(0, 200)}`);
+  }
+
+  if (res.ok && data.type === "success" && data.code === 200) {
+    return { alreadyCancelled: false };
+  }
+
+  const rejectMessage =
+    data.message || data.type || res.statusText || text.slice(0, 200);
+
+  // The cancel was rejected. Pathao reuses a vague message
+  // ("please contact cx to cancel order") both for orders already cancelled
+  // and orders too far along to cancel, so verify against the real status.
+  let info: PathaoOrderInfo | null = null;
+  try {
+    info = await getPathaoOrderInfo(trimmedId);
+  } catch {
+    // Fall through and surface the original cancel error.
+  }
+
+  if (info && isCancelledOrderStatus(info)) {
+    return { alreadyCancelled: true };
+  }
+
+  const statusSuffix = info ? ` (current status: ${info.order_status})` : "";
+  throw new Error(`Pathao cancel order failed: ${rejectMessage}${statusSuffix}`);
 }
 
 /**
